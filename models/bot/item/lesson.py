@@ -1,0 +1,20 @@
+from typing import List
+
+from pydantic import BaseModel, Field, validator
+
+from models.bot.item.cabinet import Cabinet
+from models.bot.item.corpus import Corpus
+from models.bot.item.school import School
+from models.bot.item.subclass import Subclass
+from models.bot.item.teacher import Teacher
+
+
+class Lesson(BaseModel):
+    number: int = Field(ge=0, le=20)
+    day_of_week: int = Field(ge=1, le=7)
+    subject: str = Field(max_length=200)
+    subclasses: List[Subclass]
+    teacher: Teacher
+    cabinet: Cabinet
+    corpus: Corpus
+    school: School

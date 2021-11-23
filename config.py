@@ -29,7 +29,7 @@ API_ROLE_MANAGEMENT_PREFIX = "/rolemanagement"
 API_ID_GETTER_PREFIX = "/idgetter"
 API_ANNOUNCEMENTS_PREFIX = "/announcements"
 LEVENSHTEIN_RESULTS = 5
-API_HOST = "172.0.0.2"
+API_HOST = "api"
 # if changed here, should also be changed in docker file and docker compose
 API_PORT = 8009
 # ZMQ_PORT = 8199

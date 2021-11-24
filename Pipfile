@@ -24,6 +24,8 @@ SQLAlchemy = "==1.4.26"
 
 [dev-packages]
 black = "*"
+bandit = "*"
+pyright = "*"
 
 [requires]
 python_version = "3.9"

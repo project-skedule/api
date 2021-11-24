@@ -5,3 +5,4 @@ from models.web.outgoing.lesson_number import LessonNumber
 from models.web.outgoing.school import School
 from models.web.outgoing.subclass import Subclass
 from models.web.outgoing.teacher import Teacher
+from models.web.outgoing.preview import AnnouncementsPreview

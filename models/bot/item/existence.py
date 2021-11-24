@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
 
-class Existence():
+class Existence:
     data: bool

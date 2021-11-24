@@ -26,6 +26,8 @@ SQLAlchemy = "==1.4.26"
 black = "*"
 bandit = "*"
 pyright = "*"
+string-color = "*"
+requests = "*"
 
 [requires]
 python_version = "3.9"

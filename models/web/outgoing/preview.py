@@ -1,6 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
-from models.web.outgoing.subclass import Subclass
+
+class Subclass(BaseModel):
+    educational_level: int = Field(ge=1, le=12)
+    identificator: str = Field(max_length=50)
+    additional_identificator: str = Field(max_length=50)
 
 
 class AnnouncementsPreview(BaseModel):

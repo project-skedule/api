@@ -1,9 +1,9 @@
 from os import getenv as config
 from pathlib import Path
 
-# import zmq
+# imptort zmq
 # import zmq.asyncio
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -32,7 +32,8 @@ LEVENSHTEIN_RESULTS = 5
 API_HOST = "api"
 # if changed here, should also be changed in docker file and docker compose
 API_PORT = 8009
-# ZMQ_PORT = 8199
+TRANSMITTER_HOST="transmitter"
+TRANSMITTER_PORT=8998
 # load_dotenv(dotenv_path=ENV_PATH)
 DATABASE_USER = config("DATABASE_USER")
 DATABASE_PASSWORD = config("DATABASE_PASSWORD")

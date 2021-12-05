@@ -110,14 +110,15 @@ def get_subclass_by_id(session: Session, uid: int) -> database.Subclass:
 
 
 def get_subclass_by_params(
-    session, educational_level: int, identificator: str, additional_identificator: str
+    session, school_id: int, educational_level: int, identificator: str, additional_identificator: str
 ) -> database.Subclass:
     logger.debug(
-        f"Searching for subclass with params {educational_level=} {identificator=} {additional_identificator=}"
+        f"Searching for subclass with params {educational_level=} {identificator=} {additional_identificator=} in school with {school_id=}"
     )
     subclass = (
         session.query(database.Subclass)
         .filter_by(
+            school_id=school_id,
             educational_level=educational_level,
             identificator=identificator,
             additional_identificator=additional_identificator,
@@ -126,14 +127,14 @@ def get_subclass_by_params(
     )
     if subclass is None:
         logger.debug(
-            f"Raised an exception because subclass with params {educational_level=} {identificator=} {additional_identificator=} does not exists"
+            f"Raised an exception because subclass with params {educational_level=} {identificator=} {additional_identificator=} does not exists in school with {school_id=}"
         )
         raise HTTPException(
             status_code=404,
-            detail=f"Subclass with params {educational_level=} {identificator=} {additional_identificator=} does not exists",
+            detail=f"Subclass with params {educational_level=} {identificator=} {additional_identificator=} does not exists in school with id {school_id}",
         )
     logger.debug(
-        f"Successfully found subclass with params {educational_level=} {identificator=} {additional_identificator=}"
+        f"Successfully found subclass with params {educational_level=} {identificator=} {additional_identificator=} in school with id {school_id}"
     )
     return subclass
 

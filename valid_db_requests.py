@@ -110,7 +110,11 @@ def get_subclass_by_id(session: Session, uid: int) -> database.Subclass:
 
 
 def get_subclass_by_params(
-    session, school_id: int, educational_level: int, identificator: str, additional_identificator: str
+    session,
+    school_id: int,
+    educational_level: int,
+    identificator: str,
+    additional_identificator: str,
 ) -> database.Subclass:
     logger.debug(
         f"Searching for subclass with params {educational_level=} {identificator=} {additional_identificator=} in school with {school_id=}"

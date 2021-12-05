@@ -195,7 +195,7 @@ async def get_schools_by_levenshtein(
     with SESSION_FACTORY() as session:
         schools = list(session.query(database.School).all())
 
-        schools.sort(key=lambda teacher: Levenshtein.distance(teacher, request.name))
+        schools.sort(key=lambda school: Levenshtein.distance(school.name, request.name))
         schools = schools[:LEVENSHTEIN_RESULTS]
         return info.Schools(
             data=[item.School(name=school, id=school.id) for school in schools]

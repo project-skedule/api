@@ -124,7 +124,7 @@ async def get_letters(request: incoming.Letters) -> info.Letters:
         data = []
         for i in school.subclasses:
             if i.educational_level == request.educational_level:
-                l = item.Letter(letter=i.identificator)
+                l = i.identificator
                 if l not in data:
                     data.append(l)
         return info.Letters(data=data)
@@ -146,7 +146,7 @@ async def get_groups(
                 i.educational_level == request.educational_level
                 and i.identificator == request.identificator
             ):
-                g = item.Group(group=i.additional_identificator)
+                g = i.additional_identificator
                 if g not in data:
                     data.append(g)
 

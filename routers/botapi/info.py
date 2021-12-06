@@ -343,8 +343,10 @@ async def get_canteen_text(request: incoming.Canteen):
 @router.get("/subclass/params", tags=[SUBCLASS, TELEGRAM], response_model=item.Subclass)
 async def get_subclass_by_params(request: incoming.SubclassParams):
     with SESSION_FACTORY() as session:
+        school = db_validated.get_school_by_id(session, request.school_id)
         subclass = db_validated.get_subclass_by_params(
             session,
+            school.id,
             request.educational_level,
             request.identificator,
             request.additional_identificator,

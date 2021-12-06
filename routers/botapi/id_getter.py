@@ -79,7 +79,11 @@ async def get_lesson(id: int):
         lesson = db_validated.get_lesson_by_id(session, id)
 
         return item.Lesson(
-            number=lesson.lesson_number.number,
+            lesson_number=item.LessonNumber(
+                number=lesson.lesson_number.number,
+                time_start=lesson.lesson_number.time_start,
+                time_end=lesson.lesson_number.time_end,
+            ),
             subject=lesson.subject,
             day_of_week=lesson.day_of_week,
             subclasses=[

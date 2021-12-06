@@ -196,7 +196,7 @@ async def get_schools_by_levenshtein(
         schools.sort(key=lambda school: Levenshtein.distance(school.name, request.name))
         schools = schools[:LEVENSHTEIN_RESULTS]
         return info.Schools(
-            data=[item.School(name=school, id=school.id) for school in schools]
+            data=[item.School(name=school.name, id=school.id) for school in schools]
         )
 
 

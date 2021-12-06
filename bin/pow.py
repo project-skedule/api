@@ -27307,14 +27307,14 @@ for lesson in lessons:
         lesson["teacher"],
         lesson["subject"],
         lesson["day_of_week"],
-        lesson["cabinet"]
+        lesson["cabinet"],
     )
     if key in lesson_copy:
         lesson_copy[key].append(subclasses_data[lesson["subclass"]])
     else:
         lesson_copy[key] = [subclasses_data[lesson["subclass"]]]
 
-for lesson,subclasses in lesson_copy.items():
+for lesson, subclasses in lesson_copy.items():
     lesson_number, teacher, subject, day_of_week, cabinet = lesson
     try:
         response = post(
@@ -27326,7 +27326,7 @@ for lesson,subclasses in lesson_copy.items():
                 "teacher_id": teachers_data[teacher],
                 "cabinet_id": cabinets_data[cabinet],
                 "subclasses": subclasses,
-                "day_of_week": day_of_week
+                "day_of_week": day_of_week,
             },
         )
 

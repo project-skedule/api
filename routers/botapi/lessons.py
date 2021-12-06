@@ -76,10 +76,6 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
                     name=lesson.corpus.name,
                     id=lesson.corpus.id,
                 ),
-                school=item.School(
-                    name=lesson.school.name,
-                    id=lesson.school.id,
-                ),
             )
             for lesson in lessons
         ]
@@ -159,10 +155,6 @@ async def get_lesson_for_range(
                         address=lesson.corpus.address,
                         name=lesson.corpus.name,
                     ),
-                    school=item.School(
-                        name=school.name,
-                        item=school.id,
-                    ),
                 )
             ]
 
@@ -236,10 +228,6 @@ async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
                 name=lesson.corpus.name,
                 address=lesson.corpus.address,
                 id=lesson.corpus.id,
-            ),
-            school=item.School(
-                name=lesson.school.name,
-                school=lesson.school.id,
             ),
             subclasses=[
                 item.Subclass(

@@ -17,4 +17,3 @@ class Lesson(BaseModel):
     teacher: Teacher
     cabinet: Cabinet
     corpus: Corpus
-    school: School

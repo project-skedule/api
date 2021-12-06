@@ -6,4 +6,4 @@ from models.bot.item import Group
 
 
 class Groups(BaseModel):
-    data: List[Group]
+    data: List[str]

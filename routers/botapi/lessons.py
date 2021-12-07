@@ -122,8 +122,8 @@ async def get_lesson_for_range(
                 session, request.data.subclass_id
             )
             lessons = session.query(database.Lesson).filter_by(
-                school_id=school.id, subclass_id=subclass.id
-            )
+                school_id=school.id
+            ).filter(database.Lesson.subclasses.contains(subclass))
         else:
             logger.critical(
                 f"PYDANTIC MODELS ARE DEAD, YOU GET {type(request.data)=} IN {API_PREFIX+API_LESSON_GETTER_PREFIX}/range"
@@ -135,8 +135,8 @@ async def get_lesson_for_range(
         returned_lesson: Dict[int, Any] = {}
 
         for lesson in lessons:
-            returned_lesson[lesson.day_of_day] = returned_lesson.get(
-                lesson.day_of_day, []
+            returned_lesson[lesson.day_of_week] = returned_lesson.get(
+                lesson.day_of_week, []
             ) + [
                 item.Lesson(
                     lesson_number=item.LessonNumber(

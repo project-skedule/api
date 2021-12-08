@@ -117,9 +117,11 @@ async def get_lesson_for_range(
             subclass = db_validated.get_subclass_by_id(
                 session, request.data.subclass_id
             )
-            lessons = session.query(database.Lesson).filter_by(
-                school_id=school.id
-            ).filter(database.Lesson.subclasses.contains(subclass))
+            lessons = (
+                session.query(database.Lesson)
+                .filter_by(school_id=school.id)
+                .filter(database.Lesson.subclasses.contains(subclass))
+            )
         else:
             logger.critical(
                 f"PYDANTIC MODELS ARE DEAD, YOU GET {type(request.data)=} IN {API_PREFIX+API_LESSON_GETTER_PREFIX}/range"

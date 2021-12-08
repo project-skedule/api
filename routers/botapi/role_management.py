@@ -16,7 +16,6 @@ from models import database
 from models.bot import item
 from models.bot.telegram import incoming, outgoing
 
-
 router = APIRouter(
     prefix=API_PREFIX + API_ROLE_MANAGEMENT_PREFIX,
     dependencies=[Depends(create_logger_dependency(logger))],
@@ -52,7 +51,11 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                     is_main_role=role.is_main_role,
                     role_type=role.role_type,
                     data=outgoing.Teacher(
-                        teacher_id=role.teacher.id, name=role.teacher.name
+                        teacher_id=role.teacher.id,
+                        name=role.teacher.name,
+                        school=item.School(
+                            name=role.teacher.school.name, id=role.teacher.school.id
+                        ),
                     ),
                 )
             )
@@ -349,8 +352,6 @@ async def change_role_to_teacher(request: incoming.Teacher):
                 administration=None,
             )
 
-            account.roles = [new_role]
-
             if main_role.student is not None:
                 session.delete(main_role.student)
             elif main_role.administrator is not None:
@@ -358,6 +359,8 @@ async def change_role_to_teacher(request: incoming.Teacher):
             elif main_role.parent is not None:
                 session.delete(main_role.parent)
             session.delete(main_role)
+
+            account.roles = [new_role]
 
         session.add(new_role)
         session.add(account)

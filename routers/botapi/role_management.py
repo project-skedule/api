@@ -352,11 +352,11 @@ async def change_role_to_teacher(request: incoming.Teacher):
             account.roles = [new_role]
 
             if main_role.student is not None:
-                session.remove(main_role.student)
+                session.delete(main_role.student)
             elif main_role.administrator is not None:
-                session.remove(main_role.administrator)
+                session.delete(main_role.administrator)
             elif main_role.parent is not None:
-                session.remove(main_role.parent)
+                session.delete(main_role.parent)
             session.delete(main_role)
 
         session.add(new_role)
@@ -429,11 +429,11 @@ async def change_role_to_parent(request: incoming.Parent):
 
             account.roles = [new_role]
             if main_role.student is not None:
-                session.remove(main_role.student)
+                session.delete(main_role.student)
             elif main_role.administrator is not None:
-                session.remove(main_role.administrator)
+                session.delete(main_role.administrator)
             elif main_role.parent is not None:
-                session.remove(main_role.parent)
+                session.delete(main_role.parent)
             session.delete(main_role)
 
         session.add(new_role)
@@ -509,11 +509,11 @@ async def change_role_to_student(request: incoming.Student):
 
             account.roles = [new_role]
             if main_role.student is not None:
-                session.remove(main_role.student)
-            elif main_role.administrator is not None:
-                session.remove(main_role.administrator)
+                session.delete(main_role.student)
+            elif main_role.administration is not None:
+                session.delete(main_role.administrator)
             elif main_role.parent is not None:
-                session.remove(main_role.parent)
+                session.delete(main_role.parent)
             session.delete(main_role)
 
         session.add(new_role)
@@ -591,11 +591,11 @@ async def change_role_to_administration(request: incoming.Administration):
 
             account.roles = [new_role]
             if main_role.student is not None:
-                session.remove(main_role.student)
+                session.delete(main_role.student)
             elif main_role.administrator is not None:
-                session.remove(main_role.administrator)
+                session.delete(main_role.administrator)
             elif main_role.parent is not None:
-                session.remove(main_role.parent)
+                session.delete(main_role.parent)
             session.delete(main_role)
 
         session.add(new_role)

@@ -85,7 +85,7 @@ async def register_teacher(request: incoming.Teacher):
         )
 
         role = database.Role(
-            is_main_role=False,
+            is_main_role=True,
             role_type=database.RoleEnum.TEACHER,
             student=None,
             teacher=teacher,

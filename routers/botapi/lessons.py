@@ -117,6 +117,7 @@ async def get_lesson_for_range(
             subclass = db_validated.get_subclass_by_id(
                 session, request.data.subclass_id
             )
+
             lessons = (
                 session.query(database.Lesson)
                 .filter_by(school_id=school.id)

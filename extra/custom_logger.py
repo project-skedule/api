@@ -21,13 +21,17 @@ class InterceptHandler(logging.Handler):
         except AttributeError:
             level = self.loglevel_mapping[record.levelno]
 
-        frame, depth = logging.currentframe(), 2
-        while frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
-            depth += 1
+        frame = logging.currentframe()
+        if frame is not None:
+            depth = 2
+            while frame.f_code.co_filename == logging.__file__:
+                frame = frame.f_back
+                depth += 1
 
-        log = logger.bind(request_id="app")
-        log.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+            log = logger.bind(request_id="app")
+            log.opt(depth=depth, exception=record.exc_info).log(
+                level, record.getMessage()
+            )
 
 
 class CustomizeLogger:

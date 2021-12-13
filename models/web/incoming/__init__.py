@@ -6,3 +6,4 @@ from models.web.incoming.school import School
 from models.web.incoming.subclass import Subclass
 from models.web.incoming.teacher import Teacher
 from models.web.incoming.announcement import Announcement
+import models.web.incoming.announcement as announcement

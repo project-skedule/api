@@ -124,7 +124,7 @@ async def get_letters(request: incoming.Letters) -> info.Letters:
         data = []
         for i in school.subclasses:
             if i.educational_level == request.educational_level:
-                l = item.Letter(letter=i.identificator)
+                l = i.identificator
                 if l not in data:
                     data.append(l)
         return info.Letters(data=data)
@@ -146,7 +146,7 @@ async def get_groups(
                 i.educational_level == request.educational_level
                 and i.identificator == request.identificator
             ):
-                g = item.Group(group=i.additional_identificator)
+                g = i.additional_identificator
                 if g not in data:
                     data.append(g)
 
@@ -195,10 +195,10 @@ async def get_schools_by_levenshtein(
     with SESSION_FACTORY() as session:
         schools = list(session.query(database.School).all())
 
-        schools.sort(key=lambda teacher: Levenshtein.distance(teacher, request.name))
+        schools.sort(key=lambda school: Levenshtein.distance(school.name, request.name))
         schools = schools[:LEVENSHTEIN_RESULTS]
         return info.Schools(
-            data=[item.School(name=school, id=school.id) for school in schools]
+            data=[item.School(name=school.name, id=school.id) for school in schools]
         )
 
 
@@ -225,7 +225,12 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
         return info.Lessons(
             data=[
                 item.Lesson(
-                    number=lesson.lesson_number.number,
+                    lesson_number=item.LessonNumber(
+                        id=lesson.lesson_number.id,
+                        number=lesson.lesson_number.number,
+                        time_start=lesson.lesson_number.time_start,
+                        time_end=lesson.lesson_number.time_end,
+                    ),
                     subject=lesson.subject,
                     teacher=lesson.teacher.name,
                     day_of_week=lesson.day_of_week,
@@ -273,6 +278,7 @@ async def get_all_timetables(request: incoming.LessonNumbers):
         return info.LessonNumbers(
             data=[
                 item.LessonNumber(
+                    id=lesson_number.id,
                     number=lesson_number.number,
                     time_start=lesson_number.time_start,
                     time_end=lesson_number.time_end,
@@ -339,8 +345,10 @@ async def get_canteen_text(request: incoming.Canteen):
 @router.get("/subclass/params", tags=[SUBCLASS, TELEGRAM], response_model=item.Subclass)
 async def get_subclass_by_params(request: incoming.SubclassParams):
     with SESSION_FACTORY() as session:
+        school = db_validated.get_school_by_id(session, request.school_id)
         subclass = db_validated.get_subclass_by_params(
             session,
+            school.id,
             request.educational_level,
             request.identificator,
             request.additional_identificator,

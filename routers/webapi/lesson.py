@@ -43,7 +43,9 @@ async def create_new_lesson(lesson: incoming.Lesson) -> outgoing.Lesson:
         )
 
         if check_unique != []:
-            logger.debug("Raised an exception because lesson is already exists")
+            logger.debug(
+                f"Raised an exception because lesson is already exists: {check_unique}"
+            )
             raise HTTPException(status_code=409, detail="Lesson is already exists")
         lesson = database.Lesson(
             day_of_week=lesson.day_of_week,

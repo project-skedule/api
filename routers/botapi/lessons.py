@@ -51,7 +51,12 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
 
         returned_lesson = [
             item.Lesson(
-                number=lesson.lesson_number.number,
+                lesson_number=item.LessonNumber(
+                    id = lesson.lesson_number.id,
+                    number=lesson.lesson_number.number,
+                    time_start=lesson.lesson_number.time_start,
+                    time_end=lesson.lesson_number.time_end,
+                ),
                 day_of_week=lesson.day_of_week,
                 subject=lesson.subject,
                 teacher=item.Teacher(
@@ -75,10 +80,6 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
                     address=lesson.corpus.address,
                     name=lesson.corpus.name,
                     id=lesson.corpus.id,
-                ),
-                school=item.School(
-                    name=lesson.school.name,
-                    id=lesson.school.id,
                 ),
             )
             for lesson in lessons
@@ -117,8 +118,11 @@ async def get_lesson_for_range(
             subclass = db_validated.get_subclass_by_id(
                 session, request.data.subclass_id
             )
-            lessons = session.query(database.Lesson).filter_by(
-                school_id=school.id, subclass_id=subclass.id
+
+            lessons = (
+                session.query(database.Lesson)
+                .filter_by(school_id=school.id)
+                .filter(database.Lesson.subclasses.contains(subclass))
             )
         else:
             logger.critical(
@@ -131,11 +135,16 @@ async def get_lesson_for_range(
         returned_lesson: Dict[int, Any] = {}
 
         for lesson in lessons:
-            returned_lesson[lesson.day_of_day] = returned_lesson.get(
-                lesson.day_of_day, []
+            returned_lesson[lesson.day_of_week] = returned_lesson.get(
+                lesson.day_of_week, []
             ) + [
                 item.Lesson(
-                    number=lesson.lesson_number.number,
+                    lesson_number=item.LessonNumber(
+                        id=lesson.lesson_number.id,
+                        number=lesson.lesson_number.number,
+                        time_start=lesson.lesson_number.time_start,
+                        time_end=lesson.lesson_number.time_end,
+                    ),
                     day_of_week=lesson.day_of_week,
                     subject=lesson.subject,
                     teacher=item.Teacher(
@@ -158,10 +167,6 @@ async def get_lesson_for_range(
                         id=lesson.corpus.id,
                         address=lesson.corpus.address,
                         name=lesson.corpus.name,
-                    ),
-                    school=item.School(
-                        name=school.name,
-                        item=school.id,
                     ),
                 )
             ]
@@ -224,7 +229,12 @@ async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
                 detail=f"Lesson with params {request.day_of_week=} {request.lesson_number=} {request.data=} {request.school_id=} does not exist",
             )
         return item.Lesson(
-            number=lesson.lesson_number.number,
+            lesson_number=item.LessonNumber(
+                id =lesson.lesson_number.id,
+                number=lesson.lesson_number.number,
+                time_start=lesson.lesson_number.time_start,
+                time_end=lesson.lesson_number.time_end,
+            ),
             day_of_week=lesson.day_of_week,
             subject=lesson.subject,
             cabinet=item.Cabinet(name=lesson.cabinet.name, floor=lesson.cabinet.floor),
@@ -236,10 +246,6 @@ async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
                 name=lesson.corpus.name,
                 address=lesson.corpus.address,
                 id=lesson.corpus.id,
-            ),
-            school=item.School(
-                name=lesson.school.name,
-                school=lesson.school.id,
             ),
             subclasses=[
                 item.Subclass(

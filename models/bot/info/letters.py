@@ -6,4 +6,4 @@ from models.bot.item import Letter
 
 
 class Letters(BaseModel):
-    data: List[Letter]
+    data: List[str]

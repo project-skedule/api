@@ -16,7 +16,6 @@ from models import database
 from models.bot import item
 from models.bot.telegram import incoming, outgoing
 
-
 router = APIRouter(
     prefix=API_PREFIX + API_ROLE_MANAGEMENT_PREFIX,
     dependencies=[Depends(create_logger_dependency(logger))],
@@ -37,12 +36,15 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                     data=outgoing.Student(
                         subclass_id=role.student.subclass.id,
                         subclass=item.Subclass(
+                            id=role.student.subclass.id,
                             educational_level=role.student.subclass.educational_level,
                             identificator=role.student.subclass.identificator,
                             additional_identificator=role.student.subclass.additional_identificator,
                         ),
                         school_id=role.student.school.id,
-                        school=item.School(name=role.student.school.name),
+                        school=item.School(
+                            id=role.student.school.id, name=role.student.school.name
+                        ),
                     ),
                 )
             )
@@ -52,7 +54,11 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                     is_main_role=role.is_main_role,
                     role_type=role.role_type,
                     data=outgoing.Teacher(
-                        teacher_id=role.teacher.id, name=role.teacher.name
+                        teacher_id=role.teacher.id,
+                        name=role.teacher.name,
+                        school=item.School(
+                            name=role.teacher.school.name, id=role.teacher.school.id
+                        ),
                     ),
                 )
             )
@@ -62,18 +68,19 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                     is_main_role=role.is_main_role,
                     role_type=role.role_type,
                     data=outgoing.Parent(
+                        parent_id=role.parent.id,
                         children=[
                             outgoing.Child(
-                                subclass_id=child.subclass.id,
                                 subclass=item.Subclass(
+                                    id=child.subclass.id,
                                     educational_level=child.subclass.educational_level,
                                     identificator=child.subclass.identificator,
                                     additional_identificator=child.subclass.additional_identificator,
                                 ),
-                                school=item.School(name=child.subclass.school.name),
+                                school=item.School(name=child.school.name, id=child.school.id),
                             )
                             for child in role.parent.children
-                        ]
+                        ],
                     ),
                 )
             )
@@ -84,7 +91,10 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                     role_type=role.role_type,
                     data=outgoing.Administration(
                         school_id=role.administration.school.id,
-                        school=item.School(name=role.administration.school.name),
+                        school=item.School(
+                            name=role.administration.school.name,
+                            id=role.administration.school.id,
+                        ),
                     ),
                 )
             )
@@ -248,7 +258,7 @@ def add_administration_role(request: incoming.Administration):
 @router.put("/add/child", tags=[TELEGRAM, PARENT], response_model=outgoing.Account)
 async def add_child(request: incoming.Child):
     with SESSION_FACTORY() as session:
-        account = db_validated.get_account_by_telegram_id(session, request.parent_id)
+        account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
         for role in account.roles:
             if role.role_type == database.RoleEnum.PARENT:
@@ -349,15 +359,15 @@ async def change_role_to_teacher(request: incoming.Teacher):
                 administration=None,
             )
 
-            account.roles = [new_role]
-
             if main_role.student is not None:
-                session.remove(main_role.student)
-            elif main_role.administrator is not None:
-                session.remove(main_role.administrator)
+                session.delete(main_role.student)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
             elif main_role.parent is not None:
-                session.remove(main_role.parent)
+                session.delete(main_role.parent)
             session.delete(main_role)
+
+            account.roles = [new_role]
 
         session.add(new_role)
         session.add(account)
@@ -427,14 +437,15 @@ async def change_role_to_parent(request: incoming.Parent):
                 administration=None,
             )
 
-            account.roles = [new_role]
             if main_role.student is not None:
-                session.remove(main_role.student)
-            elif main_role.administrator is not None:
-                session.remove(main_role.administrator)
+                session.delete(main_role.student)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
             elif main_role.parent is not None:
-                session.remove(main_role.parent)
+                session.delete(main_role.parent)
             session.delete(main_role)
+
+            account.roles = [new_role]
 
         session.add(new_role)
         session.add(account)
@@ -507,14 +518,15 @@ async def change_role_to_student(request: incoming.Student):
                 administration=None,
             )
 
-            account.roles = [new_role]
             if main_role.student is not None:
-                session.remove(main_role.student)
-            elif main_role.administrator is not None:
-                session.remove(main_role.administrator)
+                session.delete(main_role.student)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
             elif main_role.parent is not None:
-                session.remove(main_role.parent)
+                session.delete(main_role.parent)
             session.delete(main_role)
+
+            account.roles = [new_role]
 
         session.add(new_role)
         session.add(account)
@@ -565,7 +577,7 @@ async def change_role_to_administration(request: incoming.Administration):
 
             return account_with_roles(account)
 
-        administration = database.Administration(school=school)
+        administration = database.Administration(school_id=school.id)
 
         if account.premium_status >= 1:
             new_role = database.Role(
@@ -589,14 +601,15 @@ async def change_role_to_administration(request: incoming.Administration):
                 administration=administration,
             )
 
-            account.roles = [new_role]
             if main_role.student is not None:
-                session.remove(main_role.student)
-            elif main_role.administrator is not None:
-                session.remove(main_role.administrator)
+                session.delete(main_role.student)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
             elif main_role.parent is not None:
-                session.remove(main_role.parent)
+                session.delete(main_role.parent)
             session.delete(main_role)
+
+            account.roles = [new_role]
 
         session.add(new_role)
         session.add(account)

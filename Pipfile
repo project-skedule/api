@@ -21,11 +21,15 @@ uvicorn = "==0.15.0"
 DateTimeRange = "==1.2.0"
 python-Levenshtein = "==0.12.2"
 SQLAlchemy = "==1.4.26"
+aiohttp = "*"
 
 [dev-packages]
 black = "*"
 bandit = "*"
 pyright = "*"
+string-color = "*"
+requests = "*"
+types-requests = "*"
 
 [requires]
 python_version = "3.9"

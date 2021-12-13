@@ -226,6 +226,7 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
             data=[
                 item.Lesson(
                     lesson_number=item.LessonNumber(
+                        id=lesson.lesson_number.id,
                         number=lesson.lesson_number.number,
                         time_start=lesson.lesson_number.time_start,
                         time_end=lesson.lesson_number.time_end,
@@ -277,6 +278,7 @@ async def get_all_timetables(request: incoming.LessonNumbers):
         return info.LessonNumbers(
             data=[
                 item.LessonNumber(
+                    id=lesson_number.id,
                     number=lesson_number.number,
                     time_start=lesson_number.time_start,
                     time_end=lesson_number.time_end,

@@ -354,8 +354,8 @@ async def change_role_to_teacher(request: incoming.Teacher):
 
             if main_role.student is not None:
                 session.delete(main_role.student)
-            elif main_role.administrator is not None:
-                session.delete(main_role.administrator)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
             elif main_role.parent is not None:
                 session.delete(main_role.parent)
             session.delete(main_role)
@@ -430,14 +430,15 @@ async def change_role_to_parent(request: incoming.Parent):
                 administration=None,
             )
 
-            account.roles = [new_role]
             if main_role.student is not None:
                 session.delete(main_role.student)
-            elif main_role.administrator is not None:
-                session.delete(main_role.administrator)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
             elif main_role.parent is not None:
                 session.delete(main_role.parent)
             session.delete(main_role)
+
+            account.roles = [new_role]
 
         session.add(new_role)
         session.add(account)
@@ -510,14 +511,15 @@ async def change_role_to_student(request: incoming.Student):
                 administration=None,
             )
 
-            account.roles = [new_role]
             if main_role.student is not None:
                 session.delete(main_role.student)
             elif main_role.administration is not None:
-                session.delete(main_role.administrator)
+                session.delete(main_role.administration)
             elif main_role.parent is not None:
                 session.delete(main_role.parent)
             session.delete(main_role)
+
+            account.roles = [new_role]
 
         session.add(new_role)
         session.add(account)
@@ -568,7 +570,7 @@ async def change_role_to_administration(request: incoming.Administration):
 
             return account_with_roles(account)
 
-        administration = database.Administration(school=school)
+        administration = database.Administration(school_id=school.id)
 
         if account.premium_status >= 1:
             new_role = database.Role(
@@ -592,14 +594,15 @@ async def change_role_to_administration(request: incoming.Administration):
                 administration=administration,
             )
 
-            account.roles = [new_role]
             if main_role.student is not None:
                 session.delete(main_role.student)
-            elif main_role.administrator is not None:
-                session.delete(main_role.administrator)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
             elif main_role.parent is not None:
                 session.delete(main_role.parent)
             session.delete(main_role)
+
+            account.roles = [new_role]
 
         session.add(new_role)
         session.add(account)

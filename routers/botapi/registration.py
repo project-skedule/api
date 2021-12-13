@@ -204,6 +204,7 @@ async def register_parent(request: incoming.Parent):
                 is_main_role=role.is_main_role,
                 role_type=role.role_type,
                 data=outgoing.Parent(
+                    parent_id=role.parent.id,
                     children=[
                         outgoing.Child(
                             subclass=item.Subclass(

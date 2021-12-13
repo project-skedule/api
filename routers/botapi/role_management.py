@@ -36,12 +36,15 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                     data=outgoing.Student(
                         subclass_id=role.student.subclass.id,
                         subclass=item.Subclass(
+                            id=role.student.subclass.id,
                             educational_level=role.student.subclass.educational_level,
                             identificator=role.student.subclass.identificator,
                             additional_identificator=role.student.subclass.additional_identificator,
                         ),
                         school_id=role.student.school.id,
-                        school=item.School(name=role.student.school.name),
+                        school=item.School(
+                            id=role.student.school.id, name=role.student.school.name
+                        ),
                     ),
                 )
             )
@@ -65,18 +68,19 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                     is_main_role=role.is_main_role,
                     role_type=role.role_type,
                     data=outgoing.Parent(
+                        parent_id=role.parent.id,
                         children=[
                             outgoing.Child(
-                                subclass_id=child.subclass.id,
                                 subclass=item.Subclass(
+                                    id=child.subclass.id,
                                     educational_level=child.subclass.educational_level,
                                     identificator=child.subclass.identificator,
                                     additional_identificator=child.subclass.additional_identificator,
                                 ),
-                                school=item.School(name=child.subclass.school.name),
+                                school=item.School(name=child.school.name, id=child.school.id),
                             )
                             for child in role.parent.children
-                        ]
+                        ],
                     ),
                 )
             )
@@ -87,7 +91,10 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                     role_type=role.role_type,
                     data=outgoing.Administration(
                         school_id=role.administration.school.id,
-                        school=item.School(name=role.administration.school.name),
+                        school=item.School(
+                            name=role.administration.school.name,
+                            id=role.administration.school.id,
+                        ),
                     ),
                 )
             )
@@ -251,7 +258,7 @@ def add_administration_role(request: incoming.Administration):
 @router.put("/add/child", tags=[TELEGRAM, PARENT], response_model=outgoing.Account)
 async def add_child(request: incoming.Child):
     with SESSION_FACTORY() as session:
-        account = db_validated.get_account_by_telegram_id(session, request.parent_id)
+        account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
         for role in account.roles:
             if role.role_type == database.RoleEnum.PARENT:

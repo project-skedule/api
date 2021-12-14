@@ -77,7 +77,9 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                                     identificator=child.subclass.identificator,
                                     additional_identificator=child.subclass.additional_identificator,
                                 ),
-                                school=item.School(name=child.school.name, id=child.school.id),
+                                school=item.School(
+                                    name=child.school.name, id=child.school.id
+                                ),
                             )
                             for child in role.parent.children
                         ],

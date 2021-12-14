@@ -52,7 +52,7 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
         returned_lesson = [
             item.Lesson(
                 lesson_number=item.LessonNumber(
-                    id = lesson.lesson_number.id,
+                    id=lesson.lesson_number.id,
                     number=lesson.lesson_number.number,
                     time_start=lesson.lesson_number.time_start,
                     time_end=lesson.lesson_number.time_end,
@@ -230,7 +230,7 @@ async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
             )
         return item.Lesson(
             lesson_number=item.LessonNumber(
-                id =lesson.lesson_number.id,
+                id=lesson.lesson_number.id,
                 number=lesson.lesson_number.number,
                 time_start=lesson.lesson_number.time_start,
                 time_end=lesson.lesson_number.time_end,

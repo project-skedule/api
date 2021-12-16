@@ -1,4 +1,5 @@
 from enum import Enum as EnumClass
+from typing import Dict
 
 from sqlalchemy import (
     BigInteger,
@@ -18,7 +19,7 @@ from sqlalchemy.orm import backref, relationship
 Base = declarative_base()
 
 
-def mod(status: int) -> dict[str, bool]:
+def mod(status: int) -> Dict[str, bool]:
     codes = (0b1000, 0b0100, 0b0010, 0b0001)
     keys = ("primary_key", "nullable", "autoincrement", "unique")
     data = {}

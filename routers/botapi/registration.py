@@ -219,7 +219,7 @@ async def register_parent(request: incoming.Parent):
                             ),
                         )
                         for student in role.parent.children
-                    ]
+                    ],
                 ),
             ),
         )

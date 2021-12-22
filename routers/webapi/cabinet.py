@@ -20,6 +20,7 @@ logger.info(f"Cabinet router created on {API_PREFIX+API_CABINET_PREFIX}")
 async def create_new_cabinet(cabinet: incoming.Cabinet) -> outgoing.Cabinet:
     with SESSION_FACTORY() as session:
         corpus = db_validated.get_corpus_by_id(session, cabinet.corpus_id)
+        school = db_validated.get_school_by_id(session, corpus.school_id)
         logger.debug(
             f"Searching cabinet with name {cabinet.name} and corpus_id {cabinet.corpus_id}"
         )
@@ -41,8 +42,10 @@ async def create_new_cabinet(cabinet: incoming.Cabinet) -> outgoing.Cabinet:
             f"Adding cabinet with name {cabinet.name} on floor {cabinet.floor} to corpus with id {corpus.id}"
         )
         corpus.cabinets.append(cabinet)
+        school.cabinets.append(cabinet)
         session.add(cabinet)
         session.add(corpus)
+        session.add(school)
         session.commit()
         logger.debug(f"Cabinet with name {cabinet.name} acquired id {cabinet.id}")
         return outgoing.Cabinet(id=cabinet.id)

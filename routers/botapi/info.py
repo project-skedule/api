@@ -209,12 +209,10 @@ async def get_cabinets(request: incoming.Cabinets) -> info.Cabinets:
     with SESSION_FACTORY() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         return info.Cabinets(
-            data=list(
-                {
-                    item.Cabinet(name=cabinet.name, floor=cabinet.floor)
-                    for cabinet in school.cabinets
-                }
-            )
+            data=[
+                item.Cabinet(name=cabinet.name, floor=cabinet.floor)
+                for cabinet in school.cabinets
+            ]
         )
 
 

@@ -94,7 +94,7 @@ async def update_lesson(request: updating.Lesson):
             teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
             if teacher.school_id != lesson.school_id:
                 logger.debug(
-                    f"Raised an exception because teacher is in another school (ID: {lesson_number.school_id}) from lesson (ID: {lesson.school_id})"
+                    f"Raised an exception because teacher is in another school (ID: {teacher.school_id}) from lesson (ID: {lesson.school_id})"
                 )
                 raise HTTPException(
                     status_code=409, detail="Teacher is in another school"
@@ -108,7 +108,7 @@ async def update_lesson(request: updating.Lesson):
             ]
             if any(subclass.school_id != lesson.school_id for subclass in subclasses):
                 logger.debug(
-                    f"Raised an exception because subclass is in another school (ID: {lesson_number.school_id}) from lesson (ID: {lesson.school_id})"
+                    f"Raised an exception because subclass is in another school from lesson (ID: {lesson.school_id})"
                 )
                 raise HTTPException(
                     status_code=409, detail="Subclass is in another school"
@@ -117,6 +117,13 @@ async def update_lesson(request: updating.Lesson):
 
         if request.cabinet_id is not None:
             cabinet = db_validated.get_cabinet_by_id(session, request.cabinet_id)
+            if cabinet.school_id != lesson.school_id:
+                logger.debug(
+                    f"Raised an exception because cabinet is in another school (ID: {cabinet.school_id}) from lesson (ID: {lesson.school_id})"
+                )
+                raise HTTPException(
+                    status_code=409, detail="Cabinet is in another school"
+                )
             lesson.cabinet_id = cabinet.id
 
         session.add(lesson)

@@ -115,6 +115,10 @@ async def update_lesson(request: updating.Lesson):
                 )
             lesson.subclasses = subclasses
 
+        if request.cabinet_id is not None:
+            cabinet = db_validated.get_cabinet_by_id(session, request.cabinet_id)
+            lesson.cabinet_id = cabinet.id
+
         session.add(lesson)
         session.commit()
 

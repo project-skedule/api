@@ -210,7 +210,11 @@ async def get_cabinets(request: incoming.Cabinets) -> info.Cabinets:
         school = db_validated.get_school_by_id(session, request.school_id)
         return info.Cabinets(
             data=[
-                item.Cabinet(name=cabinet.name, floor=cabinet.floor)
+                item.Cabinet(
+                    name=cabinet.name,
+                    floor=cabinet.floor,
+                    id=cabinet.id,
+                )
                 for cabinet in school.cabinets
             ]
         )
@@ -242,6 +246,7 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
                         for subclass in lesson.subclasses
                     ],
                     cabinet=item.Cabinet(
+                        id=lesson.cabinet.id,
                         floor=lesson.cabinet.floor,
                         name=lesson.cabinet.name,
                     ),
@@ -319,6 +324,7 @@ async def get_free_cabinet(request: incoming.FreeCabinet):
         return info.Cabinets(
             data=[
                 item.Cabinet(
+                    id=cabinet.id,
                     floor=cabinet.floor,
                     name=cabinet.name,
                 )

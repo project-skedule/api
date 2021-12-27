@@ -172,7 +172,7 @@ def check_unique_account_by_telegram_id(session: Session, telegram_id: int):
     logger.debug(f"Account with telegram id {telegram_id} does not exists")
 
 
-def get_lesson_by_id(session: Session, uid: int):
+def get_lesson_by_id(session: Session, uid: int) -> database.Lesson:
     logger.debug(f"Searching lesson with id {uid}")
     lesson = session.query(database.Lesson).filter_by(id=uid).first()
 

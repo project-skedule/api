@@ -81,10 +81,24 @@ async def update_lesson(request: updating.Lesson):
             lesson_number = db_validated.get_lesson_number_by_id(
                 session, request.lesson_number_id
             )
+            if lesson_number.school_id != lesson.school_id:
+                logger.debug(
+                    f"Raised an exception because lesson number is in another school (ID: {lesson_number.school_id}) from lesson (ID: {lesson.school_id})"
+                )
+                raise HTTPException(
+                    status_code=409, detail="Lesson number is in another school"
+                )
             lesson.lesson_number_id = lesson_number.id
 
         if request.teacher_id is not None:
             teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
+            if teacher.school_id != lesson.school_id:
+                logger.debug(
+                    f"Raised an exception because teacher is in another school (ID: {teacher.school_id}) from lesson (ID: {lesson.school_id})"
+                )
+                raise HTTPException(
+                    status_code=409, detail="Teacher is in another school"
+                )
             lesson.teacher_id = teacher.id
 
         if request.subclasses is not None:
@@ -92,7 +106,25 @@ async def update_lesson(request: updating.Lesson):
                 db_validated.get_subclass_by_id(session, s_id)
                 for s_id in request.subclasses
             ]
+            if any(subclass.school_id != lesson.school_id for subclass in subclasses):
+                logger.debug(
+                    f"Raised an exception because subclass is in another school from lesson (ID: {lesson.school_id})"
+                )
+                raise HTTPException(
+                    status_code=409, detail="Subclass is in another school"
+                )
             lesson.subclasses = subclasses
+
+        if request.cabinet_id is not None:
+            cabinet = db_validated.get_cabinet_by_id(session, request.cabinet_id)
+            if cabinet.school_id != lesson.school_id:
+                logger.debug(
+                    f"Raised an exception because cabinet is in another school (ID: {cabinet.school_id}) from lesson (ID: {lesson.school_id})"
+                )
+                raise HTTPException(
+                    status_code=409, detail="Cabinet is in another school"
+                )
+            lesson.cabinet_id = cabinet.id
 
         session.add(lesson)
         session.commit()

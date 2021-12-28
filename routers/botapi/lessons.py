@@ -73,6 +73,7 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
                     for subclass in lesson.subclasses
                 ],
                 cabinet=item.Cabinet(
+                    id=lesson.cabinet.id,
                     floor=lesson.cabinet.floor,
                     name=lesson.cabinet.name,
                 ),
@@ -161,7 +162,9 @@ async def get_lesson_for_range(
                         for subclass in lesson.subclasses
                     ],
                     cabinet=item.Cabinet(
-                        floor=lesson.cabinet.floor, name=lesson.cabinet.name
+                        floor=lesson.cabinet.floor,
+                        name=lesson.cabinet.name,
+                        id=lesson.cabinet.id,
                     ),
                     corpus=item.Corpus(
                         id=lesson.corpus.id,
@@ -237,7 +240,11 @@ async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
             ),
             day_of_week=lesson.day_of_week,
             subject=lesson.subject,
-            cabinet=item.Cabinet(name=lesson.cabinet.name, floor=lesson.cabinet.floor),
+            cabinet=item.Cabinet(
+                name=lesson.cabinet.name,
+                floor=lesson.cabinet.floor,
+                id=lesson.cabinet.id,
+            ),
             teacher=item.Teacher(
                 name=lesson.teacher.name,
                 id=lesson.teacher.id,

@@ -101,6 +101,7 @@ async def get_lesson(id: int):
                 id=lesson.teacher.id,
             ),
             cabinet=item.Cabinet(
+                id=lesson.cabinet.id,
                 floor=lesson.cabinet.floor,
                 name=lesson.cabinet.name,
             ),
@@ -122,6 +123,7 @@ async def get_cabinet(id: int):
         cabinet = db_validated.get_cabinet_by_id(session, id)
 
         return item.Cabinet(
+            id=cabinet.id,
             floor=cabinet.floor,
             name=cabinet.name,
         )

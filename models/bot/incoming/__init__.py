@@ -1,3 +1,5 @@
+# pyright: reportUnusedImport=false
+
 from models.bot.incoming.cabinets import Cabinets
 from models.bot.incoming.canteen import Canteen
 from models.bot.incoming.certain_lesson import CertainLesson

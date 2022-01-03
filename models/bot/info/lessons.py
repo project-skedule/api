@@ -1,9 +1,9 @@
 from typing import List
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel
 
-from models.bot import item
+from models.bot.item.lesson import Lesson
 
 
 class Lessons(BaseModel):
-    data: List[item.Lesson]
+    data: List[Lesson]

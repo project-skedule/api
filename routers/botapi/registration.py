@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
+
+from fastapi import APIRouter, Depends
 import valid_db_requests as db_validated
 from config import API_PREFIX, API_REGISTRATION_PREFIX
 from config import DEFAULT_LOGGER as logger

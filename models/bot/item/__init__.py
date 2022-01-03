@@ -1,3 +1,5 @@
+# pyright: reportUnusedImport=false
+
 from models.bot.item.cabinet import Cabinet
 from models.bot.item.corpus import Corpus
 from models.bot.item.group import Group

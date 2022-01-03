@@ -1,6 +1,6 @@
-from typing import List
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
-import Levenshtein
+import Levenshtein  # pyright: reportMissingTypeStubs=false
 from fastapi import APIRouter, Depends
 
 import valid_db_requests as db_validated

@@ -1,3 +1,5 @@
+# pyright: reportUnusedImport=false
+
 from models.web.outgoing.cabinet import Cabinet
 from models.web.outgoing.corpus import Corpus
 from models.web.outgoing.lesson import Lesson

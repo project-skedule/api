@@ -1,5 +1,8 @@
 from typing import Any, Dict
 
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
+
+
 from fastapi import APIRouter, Depends, HTTPException
 
 import valid_db_requests as db_validated
@@ -33,7 +36,7 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
                 )
                 .all()
             )
-        elif isinstance(request.data, incoming.Subclass):
+        else:
             subclass = db_validated.get_subclass_by_id(
                 session, request.data.subclass_id
             )
@@ -43,11 +46,6 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
                 .filter(database.Lesson.subclasses.contains(subclass))
                 .all()
             )
-        else:
-            logger.critical(
-                f"PYDANTIC MODELS ARE DEAD, YOU GET {type(request.data)=} IN {API_PREFIX+API_LESSON_GETTER_PREFIX}/day"
-            )
-            raise HTTPException(status_code=422, detail=f"Invalid data: {request.data}")
 
         returned_lesson = [
             item.Lesson(
@@ -115,7 +113,7 @@ async def get_lesson_for_range(
             lessons = session.query(database.Lesson).filter_by(
                 teacher_id=teacher.id, school_id=school.id
             )
-        elif isinstance(request.data, incoming.Subclass):
+        else:
             subclass = db_validated.get_subclass_by_id(
                 session, request.data.subclass_id
             )
@@ -125,11 +123,6 @@ async def get_lesson_for_range(
                 .filter_by(school_id=school.id)
                 .filter(database.Lesson.subclasses.contains(subclass))
             )
-        else:
-            logger.critical(
-                f"PYDANTIC MODELS ARE DEAD, YOU GET {type(request.data)=} IN {API_PREFIX+API_LESSON_GETTER_PREFIX}/range"
-            )
-            raise HTTPException(status_code=422, detail=f"Invalid data: {request.data}")
         days = list(range(request.start_index, request.end_index + 1))
         lessons = lessons.filter(database.Lesson.day_of_week.in_(days)).all()
 
@@ -207,18 +200,14 @@ async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
             lessons = session.query(database.Lesson).filter_by(
                 teacher_id=teacher.id, school_id=school.id
             )
-        elif isinstance(request.data, incoming.Subclass):
+        else:
             subclass = db_validated.get_subclass_by_id(
                 session, request.data.subclass_id
             )
             lessons = session.query(database.Lesson).filter_by(
                 school_id=school.id, subclass_id=subclass.id
             )
-        else:
-            logger.critical(
-                f"PYDANTIC MODELS ARE DEAD, YOU GET {type(request.data)=} IN {API_PREFIX+API_LESSON_GETTER_PREFIX}/range"
-            )
-            raise HTTPException(status_code=422, detail=f"Invalid data: {request.data}")
+
         lesson = lessons.filter_by(
             day_of_week=request.day_of_week,
             lesson_number_id=lesson_number.id,

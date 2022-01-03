@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from models.bot.item.school import School
 from models.bot.item.subclass import Subclass

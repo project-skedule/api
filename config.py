@@ -1,5 +1,7 @@
 from os import getenv as config
 from pathlib import Path
+from typing import Callable, ContextManager
+from sqlalchemy.orm.session import Session
 
 # imptort zmq
 # import zmq.asyncio
@@ -59,7 +61,9 @@ __connect_address__ = (
 
 ENGINE = create_engine(__connect_address__)
 DEFAULT_LOGGER.debug(f"Connecting to database with {__connect_address__}")
-SESSION_FACTORY = scoped_session(sessionmaker(bind=ENGINE))
+SESSION_FACTORY: Callable[..., ContextManager[Session]] = scoped_session(
+    sessionmaker(bind=ENGINE)
+)
 # ZMQ_CONTEXT = zmq.asyncio.Context()
 # ZMQ_SOCKET = ZMQ_CONTEXT.socket(zmq.PULL)
 # ZMQ_SOCKET.bind(f"tcp://{API_HOST}:{ZMQ_PORT}")

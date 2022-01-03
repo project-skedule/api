@@ -1,3 +1,6 @@
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
+
+
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 import valid_db_requests as db_validated
@@ -42,7 +45,7 @@ async def post_new_announcement(request: incoming.Announcement):
                         teachers.add(teacher_role.teacher.name)
                         telegram_ids.add(teacher_role.account.id)
 
-                elif isinstance(filter_object, incoming.announcement.Subclass):
+                else:
                     student_roles = session.query(database.Role).filter_by(
                         role_type=database.RoleEnum.STUDENT
                     )

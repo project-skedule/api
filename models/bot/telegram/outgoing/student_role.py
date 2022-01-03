@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from models.bot.telegram.outgoing.student import Student
 from models.database import RoleEnum

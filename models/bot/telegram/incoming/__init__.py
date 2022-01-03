@@ -1,3 +1,5 @@
+# pyright: reportUnusedImport=false
+
 from models.bot.telegram.incoming.account import Account
 from models.bot.telegram.incoming.administration import Administration
 from models.bot.telegram.incoming.child import Child

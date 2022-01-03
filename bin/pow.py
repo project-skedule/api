@@ -1,7 +1,8 @@
-from distutils import text_file
+# pyright: reportUnknownArgumentType=false, reportUnknownVariableType=false
 
+from typing import Dict, List, Tuple
 from requests import get, post, put
-from stringcolor import cs
+from stringcolor import cs  # pyright: reportMissingTypeStubs=false
 
 API_HOST = "localhost"
 API_PORT = "8009"
@@ -517,7 +518,7 @@ subclasses = [
     "11г1",
 ]
 
-subclasses_data = {}
+subclasses_data: Dict[str, str] = {}
 
 for subclass in subclasses:
 
@@ -27300,7 +27301,7 @@ lessons = [
         "cabinet": "1 корпус, 315",
     },
 ]
-lesson_copy = {}
+lesson_copy: Dict[Tuple[int, str, str, int, str], List[str]] = {}
 for lesson in lessons:
     key = (
         lesson["lesson_number"],
@@ -27309,10 +27310,11 @@ for lesson in lessons:
         lesson["day_of_week"],
         lesson["cabinet"],
     )
+    
     if key in lesson_copy:
-        lesson_copy[key].append(subclasses_data[lesson["subclass"]])
+        lesson_copy[key].append(subclasses_data[lesson["subclass"]]) # pyright: reportGeneralTypeIssues=false
     else:
-        lesson_copy[key] = [subclasses_data[lesson["subclass"]]]
+        lesson_copy[key] = [subclasses_data[lesson["subclass"]]] # pyright: reportGeneralTypeIssues=false
 
 for lesson, subclasses in lesson_copy.items():
     lesson_number, teacher, subject, day_of_week, cabinet = lesson

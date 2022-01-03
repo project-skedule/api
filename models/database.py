@@ -1,3 +1,5 @@
+# pyright: reportUnknownArgumentType=false, reportUnknownMemberType=false, reportUnknownVariableType=false, reportUntypedBaseClass=false
+
 from enum import Enum as EnumClass
 from typing import Dict
 
@@ -22,7 +24,7 @@ Base = declarative_base()
 def mod(status: int) -> Dict[str, bool]:
     codes = (0b1000, 0b0100, 0b0010, 0b0001)
     keys = ("primary_key", "nullable", "autoincrement", "unique")
-    data = {}
+    data: Dict[str, bool] = {}
     for code, key in zip(codes, keys):
         flag, status = divmod(status, code)
         data[key] = bool(flag)

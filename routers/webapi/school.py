@@ -1,3 +1,6 @@
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
+
+
 from fastapi import APIRouter, Depends, HTTPException
 
 import valid_db_requests as db_validated

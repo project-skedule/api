@@ -1,10 +1,9 @@
 from typing import List
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from models.bot.item.cabinet import Cabinet
 from models.bot.item.corpus import Corpus
-from models.bot.item.school import School
 from models.bot.item.subclass import Subclass
 from models.bot.item.teacher import Teacher
 from models.bot.item.lesson_number import LessonNumber

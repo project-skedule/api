@@ -1,3 +1,5 @@
+# pyright: reportUnusedImport=false
+
 from models.bot.telegram.outgoing.registered.administration import (
     Administration,
 )

@@ -1,8 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel, Field, validator
-
-from models.bot.item import Group
+from pydantic import BaseModel
 
 
 class Groups(BaseModel):

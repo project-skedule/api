@@ -1,3 +1,5 @@
+# pyright: reportUnusedImport=false
+
 from models.web.updating.cabinet import Cabinet
 from models.web.updating.corpus import Corpus
 from models.web.updating.lesson import Lesson

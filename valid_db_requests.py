@@ -1,3 +1,5 @@
+# pyright: reportUnknownMemberType=false
+
 from fastapi import HTTPException
 from sqlalchemy.orm.session import Session
 
@@ -110,7 +112,7 @@ def get_subclass_by_id(session: Session, uid: int) -> database.Subclass:
 
 
 def get_subclass_by_params(
-    session,
+    session: Session,
     school_id: int,
     educational_level: int,
     identificator: str,

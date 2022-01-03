@@ -1,7 +1,9 @@
+# pyright: reportUnusedImport=false, reportOptionalMemberAccess=false
+
 import json
 import logging
 from pathlib import Path
-
+from typing import Any, Dict
 from loguru import logger
 
 
@@ -15,7 +17,7 @@ class InterceptHandler(logging.Handler):
         0: "NOTSET",
     }
 
-    def emit(self, record):
+    def emit(self, record: Any):
         try:
             level = logger.level(record.levelname).name
         except AttributeError:
@@ -24,7 +26,10 @@ class InterceptHandler(logging.Handler):
         frame = logging.currentframe()
         if frame is not None:
             depth = 2
-            while frame.f_code.co_filename == logging.__file__:
+
+            while (
+                frame.f_code.co_filename == logging.__file__
+            ):  # type: reportOptionalMemberAccess=false
                 frame = frame.f_back
                 depth += 1
 
@@ -52,7 +57,7 @@ class CustomizeLogger:
         )
 
     @classmethod
-    def customize_logging(cls, filepath: Path, **kwargs):
+    def customize_logging(cls, filepath: Path, **kwargs: Dict[str, Any]):
         logger.remove()
         logger.add(str(filepath), **kwargs)
         logging.basicConfig(handlers=[InterceptHandler()], level=0)
@@ -64,7 +69,7 @@ class CustomizeLogger:
         return logger.bind(request_id=None, method=None)
 
     @classmethod
-    def load_logging_config(cls, config_path):
+    def load_logging_config(cls, config_path: Path):
         config = None
         with open(config_path) as config_file:
             config = json.load(config_file)

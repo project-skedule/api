@@ -1,5 +1,6 @@
+# pyright: reportUnknownMemberType=false
+
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
 
 import valid_db_requests as db_validated
 from config import API_ID_GETTER_PREFIX, API_PREFIX
@@ -16,7 +17,6 @@ from extra.tags import (
     SUBCLASS,
     TEACHER,
 )
-from models import database
 from models.bot import item
 
 router = APIRouter(
@@ -94,7 +94,7 @@ async def get_lesson(id: int):
                     identificator=subclass.identificator,
                     additional_identificator=subclass.additional_identificator,
                 )
-                for subclass in lesson.subclasses
+                for subclass in lesson.subclasses  # pyright: reportUnknownVariableType=false
             ],
             teacher=item.Teacher(
                 name=lesson.teacher.name,

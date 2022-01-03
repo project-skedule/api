@@ -1,3 +1,5 @@
+# pyright: reportUnusedImport=false
+
 from models.bot.info.cabinets import Cabinets
 from models.bot.info.canteen import Canteen
 from models.bot.info.corpuses import Corpuses

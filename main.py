@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-from pydantic import validate_arguments
 
 from config import DEFAULT_LOGGER as logger
 from routers import routers

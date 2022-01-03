@@ -214,6 +214,11 @@ async def get_cabinets(request: incoming.Cabinets) -> info.Cabinets:
                     name=cabinet.name,
                     floor=cabinet.floor,
                     id=cabinet.id,
+                    corpus=item.Corpus(
+                        address=cabinet.corpus.address,
+                        name=cabinet.corpus.name,
+                        id=cabinet.corpus.id,
+                    ),
                 )
                 for cabinet in school.cabinets
             ]
@@ -249,11 +254,11 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
                         id=lesson.cabinet.id,
                         floor=lesson.cabinet.floor,
                         name=lesson.cabinet.name,
-                    ),
-                    corpus=item.Corpus(
-                        address=lesson.corpus.address,
-                        name=lesson.corpus.name,
-                        id=lesson.corpus.id,
+                        corpus=item.Corpus(
+                            address=lesson.corpus.address,
+                            name=lesson.corpus.name,
+                            id=lesson.corpus.id,
+                        ),
                     ),
                     school=item.School(
                         name=lesson.school.name,
@@ -327,6 +332,11 @@ async def get_free_cabinet(request: incoming.FreeCabinet):
                     id=cabinet.id,
                     floor=cabinet.floor,
                     name=cabinet.name,
+                    corpus=item.Corpus(
+                        address=cabinet.corpus.address,
+                        name=cabinet.corpus.name,
+                        id=cabinet.corpus.id,
+                    ),
                 )
                 for cabinet in cabinets
             ]

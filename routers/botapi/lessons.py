@@ -74,11 +74,11 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
                     id=lesson.cabinet.id,
                     floor=lesson.cabinet.floor,
                     name=lesson.cabinet.name,
-                ),
-                corpus=item.Corpus(
-                    address=lesson.corpus.address,
-                    name=lesson.corpus.name,
-                    id=lesson.corpus.id,
+                    corpus=item.Corpus(
+                        address=lesson.corpus.address,
+                        name=lesson.corpus.name,
+                        id=lesson.corpus.id,
+                    ),
                 ),
             )
             for lesson in lessons
@@ -158,11 +158,11 @@ async def get_lesson_for_range(
                         floor=lesson.cabinet.floor,
                         name=lesson.cabinet.name,
                         id=lesson.cabinet.id,
-                    ),
-                    corpus=item.Corpus(
-                        id=lesson.corpus.id,
-                        address=lesson.corpus.address,
-                        name=lesson.corpus.name,
+                        corpus=item.Corpus(
+                            id=lesson.corpus.id,
+                            address=lesson.corpus.address,
+                            name=lesson.corpus.name,
+                        ),
                     ),
                 )
             ]
@@ -233,15 +233,15 @@ async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
                 name=lesson.cabinet.name,
                 floor=lesson.cabinet.floor,
                 id=lesson.cabinet.id,
+                corpus=item.Corpus(
+                    name=lesson.corpus.name,
+                    address=lesson.corpus.address,
+                    id=lesson.corpus.id,
+                ),
             ),
             teacher=item.Teacher(
                 name=lesson.teacher.name,
                 id=lesson.teacher.id,
-            ),
-            corpus=item.Corpus(
-                name=lesson.corpus.name,
-                address=lesson.corpus.address,
-                id=lesson.corpus.id,
             ),
             subclasses=[
                 item.Subclass(

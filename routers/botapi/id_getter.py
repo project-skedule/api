@@ -104,11 +104,11 @@ async def get_lesson(id: int):
                 id=lesson.cabinet.id,
                 floor=lesson.cabinet.floor,
                 name=lesson.cabinet.name,
-            ),
-            corpus=item.Corpus(
-                address=lesson.corpus.address,
-                name=lesson.corpus.name,
-                id=lesson.corpus.id,
+                corpus=item.Corpus(
+                    address=lesson.corpus.address,
+                    name=lesson.corpus.name,
+                    id=lesson.corpus.id,
+                ),
             ),
             school=item.School(
                 name=lesson.school.name,
@@ -126,6 +126,11 @@ async def get_cabinet(id: int):
             id=cabinet.id,
             floor=cabinet.floor,
             name=cabinet.name,
+            corpus=item.Corpus(
+                address=cabinet.corpus.address,
+                name=cabinet.corpus.name,
+                id=cabinet.corpus.id,
+            ),
         )
 
 

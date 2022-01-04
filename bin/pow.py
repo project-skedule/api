@@ -27310,11 +27310,15 @@ for lesson in lessons:
         lesson["day_of_week"],
         lesson["cabinet"],
     )
-    
+
     if key in lesson_copy:
-        lesson_copy[key].append(subclasses_data[lesson["subclass"]]) # pyright: reportGeneralTypeIssues=false
+        lesson_copy[key].append(
+            subclasses_data[lesson["subclass"]]
+        )  # pyright: reportGeneralTypeIssues=false
     else:
-        lesson_copy[key] = [subclasses_data[lesson["subclass"]]] # pyright: reportGeneralTypeIssues=false
+        lesson_copy[key] = [
+            subclasses_data[lesson["subclass"]]
+        ]  # pyright: reportGeneralTypeIssues=false
 
 for lesson, subclasses in lesson_copy.items():
     lesson_number, teacher, subject, day_of_week, cabinet = lesson

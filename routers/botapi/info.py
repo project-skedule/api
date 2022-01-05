@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 import valid_db_requests as db_validated
 from config import API_INFO_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import LEVENSHTEIN_RESULTS, SESSION_FACTORY
+from config import MAX_LEVENSHTEIN_RESULTS, SESSION_FACTORY
 from extra import create_logger_dependency
 from extra.tags import (
     CABINET,
@@ -101,7 +101,7 @@ async def get_teacher_by_levenshtein(
         teachers.sort(
             key=lambda teacher: Levenshtein.distance(teacher.name, request.name)
         )
-        teachers = teachers[:LEVENSHTEIN_RESULTS]
+        teachers = teachers[:MAX_LEVENSHTEIN_RESULTS]
         return info.Teachers(
             data=[
                 item.Teacher(
@@ -193,10 +193,12 @@ async def get_schools_by_levenshtein(
     request: incoming.SchoolsByDistance,
 ) -> info.Schools:
     with SESSION_FACTORY() as session:
-        schools = list(session.query(database.School).all())
-
-        schools.sort(key=lambda school: Levenshtein.distance(school.name, request.name))
-        schools = schools[:LEVENSHTEIN_RESULTS]
+        schools = (
+            session.query(database.School)
+            .filter(database.School.name.contains(request.name))
+            .limit(MAX_LEVENSHTEIN_RESULTS)
+            .all()
+        )
         return info.Schools(
             data=[item.School(name=school.name, id=school.id) for school in schools]
         )

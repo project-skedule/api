@@ -1,4 +1,4 @@
-from loguru import Logger
+from logging import Logger
 from typing import Any, Dict
 from fastapi import Request
 

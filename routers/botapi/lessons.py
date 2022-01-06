@@ -47,6 +47,8 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
                 .all()
             )
 
+        lessons = sorted(lessons, key=lambda x: x.lesson_number.number)
+
         returned_lesson = [
             item.Lesson(
                 lesson_number=item.LessonNumber(
@@ -125,6 +127,8 @@ async def get_lesson_for_range(
             )
         days = list(range(request.start_index, request.end_index + 1))
         lessons = lessons.filter(database.Lesson.day_of_week.in_(days)).all()
+
+        lessons = sorted(lessons, key=lambda x: x.lesson_number.number)
 
         returned_lesson: Dict[int, Any] = {}
 

@@ -171,12 +171,14 @@ async def get_lesson_for_range(
                 )
             ]
 
+        days = sorted(returned_lesson.keys())
+
         return info.LessonsForRange(
             data=[
                 info.LessonsForDay(
                     day_of_week=day_of_week, lessons=returned_lesson[day_of_week]
                 )
-                for day_of_week in returned_lesson
+                for day_of_week in days
             ]
         )
 

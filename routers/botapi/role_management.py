@@ -326,10 +326,36 @@ async def change_role_to_teacher(request: incoming.Teacher):
             )
 
         if teacher_role is not None and account.premium_status == 0:
-            raise HTTPException(
-                status_code=409,
-                detail=f"User {request.telegram_id} already has teacher role",
+            new_role = database.Role(
+                is_main_role=True,
+                role_type=database.RoleEnum.TEACHER,
+                student=None,
+                teacher=teacher,
+                parent=None,
+                administration=None,
             )
+            main_role.is_main_role = False
+            session.delete(teacher_role)
+
+            if main_role.student is not None:
+                session.delete(main_role.student)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
+            elif main_role.parent is not None:
+                session.delete(main_role.parent)
+            session.delete(main_role)
+
+            account.roles = [new_role]
+            session.add(new_role)
+            session.add(account)
+            session.commit()
+
+            return account_with_roles(account)
+
+            # raise HTTPException(
+            #    status_code=409,
+            #    detail=f"User {request.telegram_id} already has teacher role",
+            # )
 
         if teacher_role is not None and account.premium_status >= 1:
             main_role.is_main_role = False
@@ -401,11 +427,39 @@ async def change_role_to_parent(request: incoming.Parent):
                 status_code=409, detail=f"Invalid user {request.telegram_id}"
             )
 
+        parent = database.Parent()
         if parent_role is not None and account.premium_status == 0:
-            raise HTTPException(
-                status_code=409,
-                detail=f"User {request.telegram_id} already has parent role",
+            new_role = database.Role(
+                is_main_role=True,
+                role_type=database.RoleEnum.PARENT,
+                student=None,
+                teacher=None,
+                parent=parent,
+                administration=None,
             )
+            main_role.is_main_role = False
+
+            session.delete(parent_role.parent)
+            session.delete(parent_role)
+
+            if main_role.student is not None:
+                session.delete(main_role.student)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
+            elif main_role.teacher is not None:
+                session.delete(main_role.teacher)
+            session.delete(main_role)
+
+            account.roles = [new_role]
+            session.add(new_role)
+            session.add(account)
+            session.commit()
+
+            return account_with_roles(account)
+            # raise HTTPException(
+            #     status_code=409,
+            #     detail=f"User {request.telegram_id} already has parent role",
+            # )
 
         if parent_role is not None and account.premium_status >= 1:
             main_role.is_main_role = False
@@ -417,8 +471,6 @@ async def change_role_to_parent(request: incoming.Parent):
             session.commit()
 
             return account_with_roles(account)
-
-        parent = database.Parent()
 
         if account.premium_status >= 1:
             new_role = database.Role(
@@ -482,11 +534,40 @@ async def change_role_to_student(request: incoming.Student):
                 status_code=409, detail=f"Invalid user {request.telegram_id}"
             )
 
+        student = database.Student(subclass=subclass, school=subclass.school)
         if student_role is not None and account.premium_status == 0:
-            raise HTTPException(
-                status_code=409,
-                detail=f"User {request.telegram_id} already has student role",
+            new_role = database.Role(
+                is_main_role=True,
+                role_type=database.RoleEnum.STUDENT,
+                student=student,
+                teacher=None,
+                parent=None,
+                administration=None,
             )
+            main_role.is_main_role = False
+
+            session.delete(student_role.student)
+            session.delete(student_role)
+
+            if main_role.parent is not None:
+                session.delete(main_role.parent)
+            elif main_role.administration is not None:
+                session.delete(main_role.administration)
+            elif main_role.teacher is not None:
+                session.delete(main_role.teacher)
+            session.delete(main_role)
+
+            account.roles = [new_role]
+
+            session.add(new_role)
+            session.add(account)
+            session.commit()
+
+            return account_with_roles(account)
+            # raise HTTPException(
+            #     status_code=409,
+            #     detail=f"User {request.telegram_id} already has student role",
+            # )
 
         if student_role is not None and account.premium_status >= 1:
             main_role.is_main_role = False
@@ -498,8 +579,6 @@ async def change_role_to_student(request: incoming.Student):
             session.commit()
 
             return account_with_roles(account)
-
-        student = database.Student(subclass=subclass, school=subclass.school)
 
         if account.premium_status >= 1:
             new_role = database.Role(
@@ -565,11 +644,40 @@ async def change_role_to_administration(request: incoming.Administration):
                 status_code=409, detail=f"Invalid user {request.telegram_id}"
             )
 
+        administration = database.Administration(school_id=school.id)
         if administration_role is not None and account.premium_status == 0:
-            raise HTTPException(
-                status_code=409,
-                detail=f"User {request.telegram_id} already has administration role",
+            new_role = database.Role(
+                is_main_role=True,
+                role_type=database.RoleEnum.ADMINISTRATION,
+                student=None,
+                teacher=None,
+                parent=None,
+                administration=administration,
             )
+            main_role.is_main_role = False
+
+            session.delete(administration_role.administration)
+            session.delete(administration_role)
+
+            if main_role.parent is not None:
+                session.delete(main_role.parent)
+            elif main_role.student is not None:
+                session.delete(main_role.student)
+            elif main_role.teacher is not None:
+                session.delete(main_role.teacher)
+            session.delete(main_role)
+
+            account.roles = [new_role]
+
+            session.add(new_role)
+            session.add(account)
+            session.commit()
+
+            return account_with_roles(account)
+            # raise HTTPException(
+            #     status_code=409,
+            #     detail=f"User {request.telegram_id} already has administration role",
+            # )
 
         if administration_role is not None and account.premium_status >= 1:
             main_role.is_main_role = False
@@ -581,8 +689,6 @@ async def change_role_to_administration(request: incoming.Administration):
             session.commit()
 
             return account_with_roles(account)
-
-        administration = database.Administration(school_id=school.id)
 
         if account.premium_status >= 1:
             new_role = database.Role(

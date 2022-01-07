@@ -1,9 +1,8 @@
-from logging import Logger
 from typing import Any, Dict
 from fastapi import Request
 
 
-def create(logger: Logger):
+def create(logger: Any):
     async def logging_dependency(request: Request):
         try:
             logger.debug(f"{request.method} {request.url}")

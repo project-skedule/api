@@ -17,4 +17,4 @@ for router in routers:
 
 @app.get("/")
 def redirect_to_docs():
-    return RedirectResponse("/docs", status_code=302)
+    pass

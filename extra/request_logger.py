@@ -15,9 +15,8 @@ def create(logger: Any):
             logger.debug("Headers:")
             for name, value in request.headers.items():
                 logger.debug(f"\t{name}: {value}")
-            logger.debug("JSON:")
-            for name, value in (await request.json()).items():
-                logger.debug(f'\t{name}: "{value}"')
+            logger.debug("BODY:")
+            logger.debug((await request.body()))
         except Exception as e:
             logger.debug(f"Error while logging: {e}")
 

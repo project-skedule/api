@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
 
 from config import DEFAULT_LOGGER as logger
 from routers import routers
@@ -16,5 +15,5 @@ for router in routers:
 
 
 @app.get("/")
-def redirect_to_docs():
+def index_page():
     pass

@@ -279,7 +279,7 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
     tags=[INFO, LESSON_NUMBER, TELEGRAM],
     response_model=info.LessonNumbers,
 )
-async def get_all_timetables(request: incoming.LessonNumbers):
+async def get_all_timetables(request: incoming.LessonNumbers) -> info.LessonNumbers:
     with SESSION_FACTORY() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         timetables = (
@@ -301,7 +301,7 @@ async def get_all_timetables(request: incoming.LessonNumbers):
 @router.get(
     "/cabinets/free", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
 )
-async def get_free_cabinet(request: incoming.FreeCabinet):
+async def get_free_cabinet(request: incoming.FreeCabinet) -> info.Cabinets:
     with SESSION_FACTORY() as session:
         corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
 
@@ -313,15 +313,18 @@ async def get_free_cabinet(request: incoming.FreeCabinet):
 
         cabinets_ids = {cabinet.id for cabinet in cabinets}
 
-        lessons = session.query(database.Lesson).filter_by(
-            corpus_id=corpus.id, day_of_week=request.day_of_week
+        lessons = (
+            session.query(database.Lesson)
+            .filter_by(corpus_id=corpus.id, day_of_week=request.day_of_week)
+            .all()
         )
 
         if request.lesson_number is not None:
-            lessons = lessons.filter_by(
-                database.Lesson.lesson_number.number == request.lesson_number
+            lessons = filter(
+                lambda lesson: lesson.lesson_number.number == request.lesson_number,
+                lessons,
             )
-        lessons = lessons.all()
+        lessons = list(lessons)
 
         for lesson in lessons:
             cabinets_ids.discard(lesson.cabinet_id)
@@ -346,7 +349,7 @@ async def get_free_cabinet(request: incoming.FreeCabinet):
 
 
 @router.get("/corpus/canteen", tags=[CORPUS, TELEGRAM], response_model=info.Canteen)
-async def get_canteen_text(request: incoming.Canteen):
+async def get_canteen_text(request: incoming.Canteen) -> info.Canteen:
     with SESSION_FACTORY() as session:
         corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
 
@@ -359,7 +362,7 @@ async def get_canteen_text(request: incoming.Canteen):
 
 
 @router.get("/subclass/params", tags=[SUBCLASS, TELEGRAM], response_model=item.Subclass)
-async def get_subclass_by_params(request: incoming.SubclassParams):
+async def get_subclass_by_params(request: incoming.SubclassParams) -> item.Subclass:
     with SESSION_FACTORY() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         subclass = db_validated.get_subclass_by_params(
@@ -378,7 +381,7 @@ async def get_subclass_by_params(request: incoming.SubclassParams):
 
 
 @router.get("/check/telegramid", tags=[TELEGRAM], response_model=item.Result)
-async def check_existence(request: telegram.incoming.Account):
+async def check_existence(request: telegram.incoming.Account) -> item.Result:
     with SESSION_FACTORY() as session:
         account = (
             session.query(database.Account)

@@ -5,7 +5,7 @@ RUN apt install --no-install-recommends -y curl build-essential
 RUN apt install --no-install-recommends -y wget iputils-ping
 
 RUN wget https://downloads.mariadb.com/MariaDB/mariadb_repo_setup
-RUN echo "fd3f41eefff54ce144c932100f9e0f9b1d181e0edd86a6f6b8f2a0212100c32c mariadb_repo_setup" | sha256sum -c -
+# RUN echo "fd3f41eefff54ce144c932100f9e0f9b1d181e0edd86a6f6b8f2a0212100c32c mariadb_repo_setup" | sha256sum -c -
 RUN chmod +x mariadb_repo_setup
 RUN ./mariadb_repo_setup --mariadb-server-version="mariadb-10.5"
 RUN apt update

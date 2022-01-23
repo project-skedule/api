@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import valid_db_requests as db_validated
 from config import API_LESSON_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY
+from config import get_session
 from extra import create_logger_dependency
 from extra.tags import LESSON, WEBSITE
 from models import database
@@ -21,7 +21,7 @@ logger.info(f"Lesson router created on {API_PREFIX+API_LESSON_PREFIX}")
 
 @router.post("/new", tags=[LESSON, WEBSITE], response_model=outgoing.Lesson)
 async def create_new_lesson(lesson: incoming.Lesson) -> outgoing.Lesson:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         cabinet = db_validated.get_cabinet_by_id(session, lesson.cabinet_id)
         corpus = db_validated.get_corpus_by_id(session, cabinet.corpus_id)
         school = db_validated.get_school_by_id(session, corpus.school_id)
@@ -71,7 +71,7 @@ async def create_new_lesson(lesson: incoming.Lesson) -> outgoing.Lesson:
 
 @router.put("/update", tags=[LESSON, WEBSITE], response_model=outgoing.Lesson)
 async def update_lesson(request: updating.Lesson):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         lesson = db_validated.get_lesson_by_id(session, request.lesson_id)
 
         if request.day_of_week is not None:

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import valid_db_requests as db_validated
 from config import API_PREFIX, API_SUBCLASS_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY
+from config import get_session
 from extra import create_logger_dependency
 from extra.tags import SUBCLASS, WEBSITE
 from models import database
@@ -21,7 +21,7 @@ logger.info(f"Subclass fouter created on {API_PREFIX + API_SUBCLASS_PREFIX}")
 
 @router.post("/new", tags=[SUBCLASS, WEBSITE], response_model=outgoing.Subclass)
 async def create_new_subclass(subclass: incoming.Subclass) -> outgoing.Subclass:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, subclass.school_id)
         logger.info(
             f"Adding subclass '{subclass.educational_level}{subclass.identificator}{subclass.additional_identificator}' to school '{school.name}' "
@@ -59,7 +59,7 @@ async def create_new_subclass(subclass: incoming.Subclass) -> outgoing.Subclass:
 
 @router.put("/update", tags=[SUBCLASS, WEBSITE], response_model=outgoing.Subclass)
 async def update_subclass(request: updating.Subclass):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         subclass = db_validated.get_subclass_by_id(session, request.subclass_id)
 
         if request.educational_level is not None:

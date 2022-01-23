@@ -6,7 +6,7 @@ from fastapi.exceptions import HTTPException
 import valid_db_requests as db_validated
 from config import API_ANNOUNCEMENTS_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY, TRANSMITTER_HOST, TRANSMITTER_PORT
+from config import get_session, TRANSMITTER_HOST, TRANSMITTER_PORT
 from extra import create_logger_dependency
 from extra.tags import ANNOUNCEMENTS, WEBSITE
 from models import database
@@ -25,7 +25,7 @@ router = APIRouter(
     response_model=outgoing.AnnouncementsPreview,
 )
 async def post_new_announcement(request: incoming.Announcement):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         teachers = set()
         subclasses = set()

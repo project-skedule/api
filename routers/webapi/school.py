@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import valid_db_requests as db_validated
 from config import API_PREFIX, API_SCHOOL_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY
+from config import get_session
 from extra import create_logger_dependency
 from extra.tags import SCHOOL, WEBSITE
 from models import database
@@ -21,7 +21,7 @@ logger.info(f"School router created on {API_PREFIX+API_SCHOOL_PREFIX}")
 
 @router.post("/new", tags=[SCHOOL, WEBSITE], response_model=outgoing.School)
 async def create_new_school(school: incoming.School) -> outgoing.School:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         logger.debug(f'Searching school with name "{school.name}"')
         check_unique = session.query(database.School).filter_by(name=school.name).all()
         if check_unique != []:
@@ -42,7 +42,7 @@ async def create_new_school(school: incoming.School) -> outgoing.School:
 
 @router.put("/update", tags=[SCHOOL, WEBSITE], response_model=outgoing.School)
 async def update_school(request: updating.School):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
 
         if request.name is not None:

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import valid_db_requests as db_validated
 from config import API_CORPUS_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY
+from config import get_session
 from extra import create_logger_dependency
 from extra.tags import CORPUS, WEBSITE
 from models import database
@@ -21,7 +21,7 @@ logger.info(f"Corpus router created on {API_PREFIX+API_CORPUS_PREFIX}")
 
 @router.post("/new", tags=[CORPUS, WEBSITE], response_model=outgoing.Corpus)
 async def create_new_corpus(corpus: incoming.Corpus) -> outgoing.Corpus:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, corpus.school_id)
         logger.debug(
             f"Searching corpus with name {corpus.name} and school_id {corpus.school_id}"
@@ -68,7 +68,7 @@ async def create_new_corpus(corpus: incoming.Corpus) -> outgoing.Corpus:
 
 @router.put("/update", tags=[CORPUS, WEBSITE], response_model=outgoing.Corpus)
 async def update_corpus(request: updating.Corpus):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
 
         if request.address is not None:

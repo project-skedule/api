@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import valid_db_requests as db_validated
 from config import API_LESSON_GETTER_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY
+from config import get_session
 from extra import create_logger_dependency
 from extra.tags import LESSON, TELEGRAM
 from models import database
@@ -23,7 +23,7 @@ logger.info(f"Lesson Getter router created on {API_PREFIX+API_LESSON_GETTER_PREF
 
 @router.get("/day", tags=[LESSON, TELEGRAM], response_model=info.LessonsForDay)
 async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsForDay:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         if isinstance(request.data, incoming.Teacher):
             teacher = db_validated.get_teacher_by_id(session, request.data.teacher_id)
@@ -94,7 +94,7 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
 async def get_lesson_for_range(
     request: incoming.LessonsForRange,
 ) -> info.LessonsForRange:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
 
         logger.debug(
@@ -185,7 +185,7 @@ async def get_lesson_for_range(
 
 @router.get("/certain", tags=[LESSON, TELEGRAM], response_model=item.Lesson)
 async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         logger.debug(
             f"Searching lesson number with number {request.lesson_number} and school id {request.school_id}"

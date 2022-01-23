@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from os import getenv as config
 from pathlib import Path
 from typing import Callable, ContextManager
@@ -5,7 +6,7 @@ from sqlalchemy.orm.session import Session
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-
+import sqlalchemy
 from extra.custom_logger import CustomizeLogger
 
 ROOT_DIR = Path(__file__).parent
@@ -61,3 +62,20 @@ DEFAULT_LOGGER.debug(f"Connecting to database with {__connect_address__}")
 SESSION_FACTORY: Callable[..., ContextManager[Session]] = scoped_session(
     sessionmaker(bind=ENGINE)
 )
+
+
+@contextmanager
+def get_session():
+    session = SESSION_FACTORY()
+    try:
+        try:
+            session.commit()
+        except sqlalchemy.exc.InterfaceError as error:
+            session = SESSION_FACTORY()
+        finally:
+            yield session
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()    

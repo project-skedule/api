@@ -75,7 +75,11 @@ def get_session():
         finally:
             yield session
     except:
-        session.rollback()
-        raise
+        try:
+            session.commit()
+        except sqlalchemy.exc.InterfaceError as error:
+            session = SESSION_FACTORY()
+        finally:
+            yield session
     finally:
         session.close()    

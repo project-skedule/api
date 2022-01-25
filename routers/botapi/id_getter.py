@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 import valid_db_requests as db_validated
 from config import API_ID_GETTER_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY
+from config import get_session
 from extra import create_logger_dependency
 from extra.tags import (
     CABINET,
@@ -28,7 +28,7 @@ logger.info(f"int getter router created on {API_PREFIX+API_ID_GETTER_PREFIX}")
 
 @router.get("/subclass/{id}", tags=[SUBCLASS, INFO], response_model=item.Subclass)
 async def get_subclass(id: int):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         subclass = db_validated.get_subclass_by_id(session, id)
 
         return item.Subclass(
@@ -41,7 +41,7 @@ async def get_subclass(id: int):
 
 @router.get("/teacher/{id}", tags=[TEACHER, INFO], response_model=item.Teacher)
 async def get_teacher(id: int):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         teacher = db_validated.get_teacher_by_id(session, id)
 
         return item.Teacher(
@@ -52,7 +52,7 @@ async def get_teacher(id: int):
 
 @router.get("/school/{id}", tags=[SCHOOL, INFO], response_model=item.School)
 async def get_school(id: int):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, id)
 
         return item.School(
@@ -63,7 +63,7 @@ async def get_school(id: int):
 
 @router.get("/corpus/{id}", tags=[CORPUS, INFO], response_model=item.Corpus)
 async def get_corpus(id: int):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         corpus = db_validated.get_corpus_by_id(session, id)
 
         return item.Corpus(
@@ -75,7 +75,7 @@ async def get_corpus(id: int):
 
 @router.get("/lesson/{id}", tags=[LESSON, INFO], response_model=item.Lesson)
 async def get_lesson(id: int):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         lesson = db_validated.get_lesson_by_id(session, id)
 
         return item.Lesson(
@@ -119,7 +119,7 @@ async def get_lesson(id: int):
 
 @router.get("/cabinet/{id}", tags=[CABINET, INFO], response_model=item.Cabinet)
 async def get_cabinet(id: int):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         cabinet = db_validated.get_cabinet_by_id(session, id)
 
         return item.Cabinet(
@@ -140,7 +140,7 @@ async def get_cabinet(id: int):
     response_model=item.LessonNumber,
 )
 async def get_lesson_number(id: int):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         lesson_number = db_validated.get_lesson_number_by_id(session, id)
 
         return item.LessonNumber(

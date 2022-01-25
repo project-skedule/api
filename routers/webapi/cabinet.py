@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import valid_db_requests as db_validated
 from config import API_CABINET_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY
+from config import get_session
 from extra import create_logger_dependency
 from extra.tags import CABINET, WEBSITE
 from models import database
@@ -21,7 +21,7 @@ logger.info(f"Cabinet router created on {API_PREFIX+API_CABINET_PREFIX}")
 
 @router.post("/new", tags=[CABINET, WEBSITE], response_model=outgoing.Cabinet)
 async def create_new_cabinet(cabinet: incoming.Cabinet) -> outgoing.Cabinet:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         corpus = db_validated.get_corpus_by_id(session, cabinet.corpus_id)
         school = db_validated.get_school_by_id(session, corpus.school_id)
         logger.debug(
@@ -56,7 +56,7 @@ async def create_new_cabinet(cabinet: incoming.Cabinet) -> outgoing.Cabinet:
 
 @router.put("/update", tags=[CABINET, WEBSITE], response_model=outgoing.Cabinet)
 async def update_cabinet(request: updating.Cabinet):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         cabinet = db_validated.get_cabinet_by_id(session, request.cabinet_id)
 
         if request.floor is not None:

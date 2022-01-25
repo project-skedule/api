@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import valid_db_requests as db_validated
 from config import API_PREFIX, API_TEACHER_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY
+from config import get_session
 from extra import create_logger_dependency
 from extra.tags import TEACHER, WEBSITE
 from models import database
@@ -21,7 +21,7 @@ logger.info(f"Teacher router created on {API_PREFIX+API_TEACHER_PREFIX}")
 
 @router.post("/new", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
 async def create_new_teacher(teacher: incoming.Teacher) -> outgoing.Teacher:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, teacher.school_id)
         logger.debug(
             f"Searching teacher with name {teacher.name} in school with id {teacher.school_id}"
@@ -53,7 +53,7 @@ async def create_new_teacher(teacher: incoming.Teacher) -> outgoing.Teacher:
 
 @router.put("/update", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
 async def update_teacher(request: updating.Teacher):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
 
         if request.name is not None:

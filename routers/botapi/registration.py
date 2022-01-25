@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 import valid_db_requests as db_validated
 from config import API_PREFIX, API_REGISTRATION_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import SESSION_FACTORY
+from config import get_session
 from extra import create_logger_dependency
 from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER, TELEGRAM
 from models import database
@@ -22,7 +22,7 @@ logger.info(f"Registation router created on {API_PREFIX+API_REGISTRATION_PREFIX}
 
 @router.post("/student", tags=[TELEGRAM, STUDENT], response_model=registered.Student)
 async def register_student(request: incoming.Student):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
         subclass = db_validated.get_subclass_by_id(session, request.subclass_id)
         school = db_validated.get_school_by_id(session, subclass.school_id)
@@ -75,7 +75,7 @@ async def register_student(request: incoming.Student):
 
 @router.post("/teacher", tags=[TEACHER, TELEGRAM], response_model=registered.Teacher)
 async def register_teacher(request: incoming.Teacher):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
         teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
 
@@ -125,7 +125,7 @@ async def register_teacher(request: incoming.Teacher):
     response_model=registered.Administration,
 )
 async def register_administration(request: incoming.Administration):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
         school = db_validated.get_school_by_id(session, request.school_id)
         account = database.Account(
@@ -171,7 +171,7 @@ async def register_administration(request: incoming.Administration):
 
 @router.post("/parent", tags=[PARENT, TELEGRAM], response_model=registered.Parent)
 async def register_parent(request: incoming.Parent):
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
 
         account = database.Account(

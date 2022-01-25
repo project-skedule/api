@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 import valid_db_requests as db_validated
 from config import API_INFO_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
-from config import MAX_LEVENSHTEIN_RESULTS, SESSION_FACTORY
+from config import MAX_LEVENSHTEIN_RESULTS, get_session
 from extra import create_logger_dependency
 from extra.tags import (
     CABINET,
@@ -38,7 +38,7 @@ logger.info(f"Info router created on {API_PREFIX+API_INFO_PREFIX}")
 async def get_subclasses(
     request: incoming.Subclasses,
 ) -> info.Subclasses:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         return info.Subclasses(
             data=[
@@ -61,7 +61,7 @@ async def get_subclasses(
 async def get_teachers(
     request: incoming.Teachers,
 ) -> info.Teachers:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         return info.Teachers(
             data=[
@@ -82,7 +82,7 @@ async def get_teachers(
 async def get_parallels(
     request: incoming.Parallels,
 ) -> info.Parallels:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         return info.Parallels(
             data=list({i.educational_level for i in school.subclasses})
@@ -95,7 +95,7 @@ async def get_parallels(
 async def get_teacher_by_levenshtein(
     request: incoming.TeacherByDistance,
 ) -> info.Teachers:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         teachers = list(school.teachers)
         teachers.sort(
@@ -119,7 +119,7 @@ async def get_teacher_by_levenshtein(
     response_model=info.Letters,
 )
 async def get_letters(request: incoming.Letters) -> info.Letters:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         data = []
         for i in school.subclasses:
@@ -138,7 +138,7 @@ async def get_letters(request: incoming.Letters) -> info.Letters:
 async def get_groups(
     request: incoming.Groups,
 ) -> info.Groups:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         data = []
         for i in school.subclasses:
@@ -159,7 +159,7 @@ async def get_groups(
     response_model=info.Schools,
 )
 async def get_school() -> info.Schools:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         schools = session.query(database.School).all()
         return info.Schools(
             data=[item.School(name=school.name, id=school.id) for school in schools]
@@ -174,7 +174,7 @@ async def get_school() -> info.Schools:
 async def get_corpuses(
     request: incoming.Corpuses,
 ) -> info.Corpuses:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         return info.Corpuses(
             data=[
@@ -192,7 +192,7 @@ async def get_corpuses(
 async def get_schools_by_levenshtein(
     request: incoming.SchoolsByDistance,
 ) -> info.Schools:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         schools = (
             session.query(database.School)
             .filter(database.School.name.contains(request.name))
@@ -208,7 +208,7 @@ async def get_schools_by_levenshtein(
     "/cabinets/all", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
 )
 async def get_cabinets(request: incoming.Cabinets) -> info.Cabinets:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         return info.Cabinets(
             data=[
@@ -229,7 +229,7 @@ async def get_cabinets(request: incoming.Cabinets) -> info.Cabinets:
 
 @router.get("/lessons/all", tags=[INFO, LESSON, TELEGRAM], response_model=info.Lessons)
 async def get_lessons(request: incoming.Lessons) -> info.Lessons:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         return info.Lessons(
             data=[
@@ -280,7 +280,7 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
     response_model=info.LessonNumbers,
 )
 async def get_all_timetables(request: incoming.LessonNumbers) -> info.LessonNumbers:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         timetables = (
             session.query(database.Lesson_number).filter_by(school_id=school.id).all()
@@ -302,7 +302,7 @@ async def get_all_timetables(request: incoming.LessonNumbers) -> info.LessonNumb
     "/cabinets/free", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
 )
 async def get_free_cabinet(request: incoming.FreeCabinet) -> info.Cabinets:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
 
         cabinets = session.query(database.Cabinet).filter_by(corpus_id=corpus.id)
@@ -350,7 +350,7 @@ async def get_free_cabinet(request: incoming.FreeCabinet) -> info.Cabinets:
 
 @router.get("/corpus/canteen", tags=[CORPUS, TELEGRAM], response_model=info.Canteen)
 async def get_canteen_text(request: incoming.Canteen) -> info.Canteen:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
 
         if corpus.canteen_text is None:
@@ -363,7 +363,7 @@ async def get_canteen_text(request: incoming.Canteen) -> info.Canteen:
 
 @router.get("/subclass/params", tags=[SUBCLASS, TELEGRAM], response_model=item.Subclass)
 async def get_subclass_by_params(request: incoming.SubclassParams) -> item.Subclass:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
         subclass = db_validated.get_subclass_by_params(
             session,
@@ -382,7 +382,7 @@ async def get_subclass_by_params(request: incoming.SubclassParams) -> item.Subcl
 
 @router.get("/check/telegramid", tags=[TELEGRAM], response_model=item.Result)
 async def check_existence(request: telegram.incoming.Account) -> item.Result:
-    with SESSION_FACTORY() as session:
+    with get_session() as session:
         account = (
             session.query(database.Account)
             .filter_by(telegram_id=request.telegram_id)

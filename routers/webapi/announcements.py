@@ -27,9 +27,13 @@ router = APIRouter(
 async def post_new_announcement(request: incoming.Announcement):
     with get_session() as session:
         school = db_validated.get_school_by_id(session, request.school_id)
+
         teachers = set()
         subclasses = set()
         telegram_ids = set()
+
+        roles = set()
+
         if request.filters is not None:
 
             for filter_object in request.filters:

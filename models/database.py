@@ -22,28 +22,36 @@ Base = declarative_base()
 
 
 def mod(status: int) -> Dict[str, bool]:
+    """
+    | Byte | Meaning |
+    |:----:|-------|
+    |1|Primary key|
+    |2|Nullable|
+    |3|Autoincrement|
+    |4|Unique|
+    """
     codes = (0b1000, 0b0100, 0b0010, 0b0001)
     keys = ("primary_key", "nullable", "autoincrement", "unique")
-    data: Dict[str, bool] = {}
+    data = {}
     for code, key in zip(codes, keys):
         flag, status = divmod(status, code)
         data[key] = bool(flag)
     return data
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 lesson_subclass_association = Table(
     "lesson_subclass_association",
     Base.metadata,
     Column("lesson_id", Integer, ForeignKey("lesson.id")),
     Column("subclass_id", Integer, ForeignKey("subclass.id")),
 )
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Account(Base):
     __tablename__ = "account"
-    account_id = Column(Integer, **mod(0b1011))
+    id = Column(Integer, **mod(0b1011))
     telegram_id = Column(BigInteger, **mod(0b0001))
     premium_status = Column(SmallInteger, default=0, **mod(0b0000))
     last_payment_data = Column(DateTime, **mod(0b0100))
@@ -51,7 +59,7 @@ class Account(Base):
     roles = relationship("Role", backref=backref("account"))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class RoleEnum(EnumClass):
@@ -63,10 +71,10 @@ class RoleEnum(EnumClass):
 
 class Role(Base):
     __tablename__ = "role"
-    role_id = Column(Integer, **mod(0b1011))
+    id = Column(Integer, **mod(0b1011))
     is_main_role = Column(Boolean, default=False, **mod(0b0000))
     role_type = Column(Enum(RoleEnum), **mod(0b0000))
-    account_id = Column(Integer, ForeignKey("account.account_id"), **mod(0b0000))
+    account_id = Column(Integer, ForeignKey("account.id"), **mod(0b0000))
     student_id = Column(Integer, ForeignKey("student.id"), default=None, **mod(0b0100))
     student = relationship("Student")
     teacher_id = Column(Integer, ForeignKey("teacher.id"), default=None, **mod(0b0100))
@@ -79,7 +87,7 @@ class Role(Base):
     parent = relationship("Parent")
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Student(Base):
@@ -90,7 +98,7 @@ class Student(Base):
     parent_id = Column(Integer, ForeignKey("parent.id"), **mod(0b0100))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Teacher(Base):
@@ -101,7 +109,7 @@ class Teacher(Base):
     lessons = relationship("Lesson", backref=backref("teacher"))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Parent(Base):
@@ -110,7 +118,7 @@ class Parent(Base):
     children = relationship("Student", backref=backref("parents"))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Administration(Base):
@@ -119,7 +127,7 @@ class Administration(Base):
     school_id = Column(Integer, ForeignKey("school.id"), **mod(0b0000))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Subclass(Base):
@@ -132,7 +140,7 @@ class Subclass(Base):
     student_id = relationship("Student", backref=backref("subclass"))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Corpus(Base):
@@ -146,7 +154,7 @@ class Corpus(Base):
     lessons = relationship("Lesson", backref=backref("corpus"))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Cabinet(Base):
@@ -159,7 +167,7 @@ class Cabinet(Base):
     school_id = Column(Integer, ForeignKey("school.id"), **mod(0b0100))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class School(Base):
@@ -176,7 +184,7 @@ class School(Base):
     cabinets = relationship("Cabinet", backref=backref("school"))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Lesson_number(Base):
@@ -189,7 +197,7 @@ class Lesson_number(Base):
     lessons = relationship("Lesson", backref=backref("lesson_number"))
 
 
-# ==========================================================================================================================
+# ==================================================================================================
 
 
 class Lesson(Base):
@@ -207,3 +215,30 @@ class Lesson(Base):
     corpus_id = Column(Integer, ForeignKey("corpus.id"), **mod(0b0000))
     cabinet_id = Column(Integer, ForeignKey("cabinet.id"), **mod(0b0000))
     school_id = Column(Integer, ForeignKey("school.id"), **mod(0b0000))
+
+
+# ==================================================================================================
+
+role_announcement_association = Table(
+    "role_announcement_association",
+    Base.metadata,
+    Column("role_id", Integer, ForeignKey("role.id")),
+    Column("announcement_id", Integer, ForeignKey("announcement.id")),
+)
+
+# ==================================================================================================
+
+
+class Announcement(Base):
+    __tablename__ = "announcement"
+    id = Column(Integer, **mod(0b1011))
+    school_id = Column(Integer, ForeignKey("school.id"), **mod(0b0000))
+    link = Column(String(length=500), **mod(0b0000))
+    roles = relationship(
+        "Role",
+        secondary=role_announcement_association,
+        backref=backref("announcements", lazy="dynamic"),
+    )
+
+
+# ==================================================================================================

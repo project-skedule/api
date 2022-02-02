@@ -4,7 +4,7 @@
     "level": "DEBUG",
     "rotation": "50MB",
     "format": "[<level>{level:<6}</level>][{time:YYYY-MM-DD HH:mm:ss.SSS}][{function}][{process}]: {message}",
-    "mode": "a",
+    "mode": "w",
     "backtrace": false,
     "enqueue": false
   }

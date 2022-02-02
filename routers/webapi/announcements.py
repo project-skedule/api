@@ -30,117 +30,137 @@ async def post_new_announcement(request: incoming.Announcement):
 
         teachers = set()
         subclasses = set()
+        parents = set()
         telegram_ids = set()
-
         roles = set()
 
-        if request.filters is not None:
+        for filter_object in request.filters:
+            logger.info(type(filter_object).__name__)
+            if isinstance(filter_object, incoming.announcement.Teacher):
+                teachers_roles = (
+                    session.query(database.Teacher)
+                    .filter_by(school_id=school.id, name=filter_object.name)
+                    .all()
+                )
+                for teacher in teachers_roles:
+                    teachers.add(teacher)
+            elif isinstance(filter_object, incoming.announcement.Subclass):
+                filtered = False
+                subclasses_db = session.query(database.Subclass).filter_by(
+                    school_id=school.id
+                )
 
-            for filter_object in request.filters:
-                if isinstance(filter_object, incoming.announcement.Teacher):
-                    teacher_roles = (
-                        session.query(database.Role)
-                        .join(database.Teacher)
-                        .filter_by(role_type=database.RoleEnum.TEACHER)
-                        .filter(database.Role.teacher.name == filter_object.name)
-                        .all()
+                if filter_object.educational_level is not None:
+                    filtered = True
+                    subclasses_db = subclasses_db.filter_by(
+                        educational_level=filter_object.educational_level
                     )
-                    for teacher_role in teacher_roles:
-                        teachers.add(teacher_role.teacher.name)
-                        telegram_ids.add(teacher_role.account.id)
 
+                if filter_object.additional_identificator is not None:
+                    filtered = True
+                    subclasses_db = subclasses_db.filter_by(
+                        additional_identificator=filter_object.additional_identificator
+                    )
+
+                if filter_object.identificator is not None:
+                    filtered = True
+                    subclasses_db = subclasses_db.filter_by(
+                        identificator=filter_object.identificator
+                    )
+
+                if filtered:
+                    subclasses_db = subclasses_db.all()
                 else:
-                    student_roles = session.query(database.Role).filter_by(
-                        role_type=database.RoleEnum.STUDENT
-                    )
-                    students = session.query(database.Student).filter_by(
-                        school_id=school.id
-                    )
+                    subclasses_db = []
 
-                    if filter_object.educational_level is not None:
-                        student_roles = student_roles.filter(
-                            database.Role.student.subclass.educational_level
-                            == filter_object.educational_level
-                        )
-                        students = students.filter(
-                            database.Student.subclass.educational_level
-                            == filter_object.educational_level
-                        )
-                    if filter_object.identificator is not None:
-                        student_roles = student_roles.filter(
-                            database.Role.student.subclass.identificator
-                            == filter_object.identificator
-                        )
-                        students = students.filter(
-                            database.Student.subclass.identificator
-                            == filter_object.identificator
-                        )
-                    if filter_object.additional_identificator is not None:
-                        student_roles = student_roles.filter(
-                            database.Role.student.subclass.additional_identificator
-                            == filter_object.additional_identificator
-                        )
-                        students = students.filter(
-                            database.Student.subclass.additional_identificator
-                            == filter_object.additional_identificator
-                        )
+                for subclass in subclasses_db:
+                    subclasses.add(subclass)
 
-                    student_roles = student_roles.all()
+        teacher_names = [teacher.name for teacher in teachers]
 
-                    for student_role in student_roles:
-                        subclasses.add(
-                            outgoing.Subclass(
-                                educational_level=student_role.student.subclass.educational_level,
-                                identificator=student_role.student.subclass.identificator,
-                                additional_identificator=student_role.student.subclass.additional_identificator,
-                            )
-                        )
-                        telegram_ids.add(student_role.account.id)
+        teacher_roles_db = (
+            session.query(database.Role)
+            .filter_by(role_type=database.RoleEnum.TEACHER)
+            .all()
+        )
 
-                    students = students.all()
+        teachers_roles = [(role.teacher, role) for role in teacher_roles_db]
+        teachers_roles = list(
+            filter(lambda pair: pair[0].name in teacher_names, teachers_roles)
+        )
 
-                    for student in students:
-                        if student.parent is not None:
-                            telegram_ids.add(student.parent.account.telegram_id)
+        accounts_ids = [role.account_id for _, role in teachers_roles]
+        accounts_db = (
+            session.query(database.Account)
+            .filter(database.Account.id in accounts_ids)
+            .all()
+        )
 
-        else:
-            student_roles = (
+        for account in accounts_db:
+            telegram_ids.add(account.telegram_id)
+
+        for _, role in teachers_roles:
+            roles.add(role)
+
+        student_roles_db = (
+            session.query(database.Role)
+            .filter_by(role_type=database.RoleEnum.STUDENT)
+            .all()
+        )
+
+        student_roles = [(role.student, role) for role in student_roles_db]
+        student_roles = list(
+            filter(lambda pair: pair[0].subclass in subclasses, student_roles)
+        )
+
+        account_ids = [role.account_id for _, role in student_roles]
+        accounts_db = (
+            session.query(database.Account)
+            .filter(database.Account.id in account_ids)
+            .all()
+        )
+
+        for account in accounts_db:
+            telegram_ids.add(account.telegram_id)
+
+        for _, role in teachers_roles:
+            roles.add(role)
+
+        if request.resend_to_parents:
+            parents_db = (
                 session.query(database.Role)
-                .join(database.Student)
-                .filter(database.Role.student.school.id == school.id)
+                .filter_by(role_type=database.RoleEnum.PARENT)
                 .all()
             )
 
-            teachers_roles = (
-                session.query(database.Teacher).filter_by(school_id=school.id).all()
+            for parent in parents_db:
+                if any(child.subclass in subclasses for child in parent.children):
+                    parents.add(parent)
+
+            account_ids = [role.account_id for role in parents]
+            accounts_db = (
+                session.query(database.Role)
+                .filter(database.Account.id in account_ids)
+                .all()
             )
 
-            children = (
-                session.query(database.Student).filter_by(school_id=school.id).all()
-            )
+            for account in accounts_db:
+                telegram_ids.add(account)
 
-            for child in children:
-                if child.parent is not None:
-                    telegram_ids.add(child.parent.account.telegram_id)
+            for role in parents:
+                roles.add(role)
 
-            for teacher_role in teachers_roles:
-                teachers.add(teacher_role.teacher.name)
-                telegram_ids.add(teacher_role.account.telegram_id)
+        announcement = database.Announcement(
+            link=request.link, school_id=school.id, roles=list(roles)
+        )
 
-            for student_role in student_roles:
-                subclasses.add(
-                    outgoing.Subclass(
-                        educational_level=student_role.student.subclass.educational_level,
-                        identificator=student_role.student.subclass.identificator,
-                        additional_identificator=student_role.student.subclass.additional_identificator,
-                    )
-                )
-                telegram_ids.add(student_role.account.telegram_id)
+        session.add(announcement)
+        session.commit()
 
         async with aiohttp.ClientSession() as http_session:
             async with http_session.post(
                 f"http://{TRANSMITTER_HOST}:{TRANSMITTER_PORT}/api/trans/redirect/telegram",
-                json={"text": request.text, "telegram_ids": list(telegram_ids)},
+                json={"link": request.link, "telegram_ids": list(telegram_ids)},
             ) as response:
                 if response.status != 200:
                     logger.error(
@@ -151,5 +171,14 @@ async def post_new_announcement(request: incoming.Announcement):
                     )
 
         return outgoing.AnnouncementsPreview(
-            teachers=list(teachers), subclasses=list(subclasses)
+            teachers=[teacher.name for teacher in teachers],
+            subclasses=[
+                outgoing.preview.Subclass(
+                    educational_level=s.educational_level,
+                    identificator=s.identificator,
+                    additional_identificator=s.additional_identificator,
+                )
+                for s in subclasses
+            ],
+            sent_to_parents=request.resend_to_parents,
         )

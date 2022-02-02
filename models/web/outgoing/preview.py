@@ -11,3 +11,4 @@ class Subclass(BaseModel):
 class AnnouncementsPreview(BaseModel):
     teachers: List[str]
     subclasses: List[Subclass]
+    sent_to_parents: bool

@@ -35,7 +35,6 @@ async def post_new_announcement(request: incoming.Announcement):
         roles = set()
 
         for filter_object in request.filters:
-            logger.info(type(filter_object).__name__)
             if isinstance(filter_object, incoming.announcement.Teacher):
                 teachers_roles = (
                     session.query(database.Teacher)
@@ -89,11 +88,10 @@ async def post_new_announcement(request: incoming.Announcement):
             filter(lambda pair: pair[0].name in teacher_names, teachers_roles)
         )
 
-        accounts_ids = [role.account_id for _, role in teachers_roles]
-        accounts_db = (
-            session.query(database.Account)
-            .filter(database.Account.id in accounts_ids)
-            .all()
+        account_ids = [role.account_id for _, role in teachers_roles]
+        accounts_db = session.query(database.Account).all()
+        accounts_db = list(
+            filter(lambda account: account.id in account_ids, accounts_db)
         )
 
         for account in accounts_db:
@@ -114,10 +112,10 @@ async def post_new_announcement(request: incoming.Announcement):
         )
 
         account_ids = [role.account_id for _, role in student_roles]
-        accounts_db = (
-            session.query(database.Account)
-            .filter(database.Account.id in account_ids)
-            .all()
+
+        accounts_db = session.query(database.Account).all()
+        accounts_db = list(
+            filter(lambda account: account.id in account_ids, accounts_db)
         )
 
         for account in accounts_db:
@@ -138,14 +136,13 @@ async def post_new_announcement(request: incoming.Announcement):
                     parents.add(parent)
 
             account_ids = [role.account_id for role in parents]
-            accounts_db = (
-                session.query(database.Role)
-                .filter(database.Account.id in account_ids)
-                .all()
+            accounts_db = session.query(database.Role).all()
+            accounts_db = list(
+                filter(lambda account: account.id in account_ids, accounts_db)
             )
 
             for account in accounts_db:
-                telegram_ids.add(account)
+                telegram_ids.add(account.telegram_id)
 
             for role in parents:
                 roles.add(role)

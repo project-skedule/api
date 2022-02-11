@@ -62,19 +62,23 @@ DEFAULT_LOGGER.debug(f"Connecting to database with {__connect_address__}")
 SESSION_FACTORY: Callable[..., ContextManager[Session]] = scoped_session(
     sessionmaker(bind=ENGINE)
 )
-get_session = SESSION_FACTORY
+# get_session = SESSION_FACTORY
 
-# @contextmanager
-# def get_session():
-#     session: Session = SESSION_FACTORY()
-#     try:
-#         try:
-#             session.commit()
-#         except sqlalchemy.exc.InterfaceError as error:
-#             raise
-#         finally:
-#             yield session
-#     except:
-#         session.rollback()
-#     finally:
-#         session.close()
+
+
+@contextmanager
+def get_session():
+    try:
+        for _ in range(10):
+            session: Session = SESSION_FACTORY()
+            try:
+                session.execute('SELECT 1')
+            except sqlalchemy.exc.InterfaceError as error:
+                continue
+            else:
+                yield session
+                break
+    except:
+        session.rollback()
+    finally:
+        session.close()

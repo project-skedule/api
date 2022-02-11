@@ -105,8 +105,12 @@ async def post_new_announcement(request: incoming.Announcement):
             .filter_by(role_type=database.RoleEnum.STUDENT)
             .all()
         )
-
-        student_roles = [(role.student, role) for role in student_roles_db]
+        
+        if request.sent_only_to_parents:
+            student_roles = []
+        else:
+            student_roles = [(role.student, role) for role in student_roles_db]
+        
         student_roles = list(
             filter(lambda pair: pair[0].subclass in subclasses, student_roles)
         )
@@ -178,4 +182,5 @@ async def post_new_announcement(request: incoming.Announcement):
                 for s in subclasses
             ],
             sent_to_parents=request.resend_to_parents,
+            sent_only_to_parents=request.sent_only_to_parents
         )

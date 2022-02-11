@@ -17,3 +17,4 @@ class Announcement(BaseModel):
     school_id: int = Field(ge=1, le=2147483647)
     filters: List[Union[Teacher, Subclass]]
     resend_to_parents: bool
+    sent_only_to_parents: bool

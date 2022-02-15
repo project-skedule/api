@@ -65,14 +65,13 @@ SESSION_FACTORY: Callable[..., ContextManager[Session]] = scoped_session(
 # get_session = SESSION_FACTORY
 
 
-
 @contextmanager
 def get_session():
     try:
         for _ in range(10):
             session: Session = SESSION_FACTORY()
             try:
-                session.execute('SELECT 1')
+                session.execute("SELECT 1")
             except sqlalchemy.exc.InterfaceError as error:
                 continue
             else:

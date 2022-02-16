@@ -3,7 +3,7 @@ from os import getenv as config
 from pathlib import Path
 from typing import Callable, ContextManager
 from sqlalchemy.orm.session import Session
-
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import sqlalchemy
@@ -77,6 +77,8 @@ def get_session():
             else:
                 yield session
                 break
+    except HTTPException as error:
+        raise error from error
     except:
         session.rollback()
     finally:

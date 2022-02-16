@@ -18,6 +18,7 @@ from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER, TELEGRAM
 from models import database
 from models.bot import item
 from models.bot.telegram import incoming, outgoing
+from models.bot import item
 
 router = APIRouter(
     prefix=API_PREFIX + API_ROLE_MANAGEMENT_PREFIX,
@@ -260,7 +261,7 @@ def add_administration_role(request: incoming.Administration):
         return account_with_roles(account)
 
 
-@router.put("/add/child", tags=[TELEGRAM, PARENT], response_model=outgoing.Account)
+@router.put("/add/child", tags=[TELEGRAM, PARENT], response_model=outgoing.Student)
 async def add_child(request: incoming.Child):
     with get_session() as session:
         account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
@@ -299,7 +300,17 @@ async def add_child(request: incoming.Child):
         session.add(account)
         session.commit()
 
-        return account_with_roles(account)
+        return outgoing.Student(
+            subclass=item.Subclass(
+                id=child.subclass_id,
+                educational_level=child.subclass.educational_level,
+                identificator=child.subclass.identificator,
+                additional_identificator=child.subclass.additional_identificator,
+            ),
+            school=item.School(
+                id=child.subclass.school_id, name=child.subclass.school.name
+            ),
+        )
 
 
 @router.put(

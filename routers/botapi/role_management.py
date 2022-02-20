@@ -262,7 +262,7 @@ def add_administration_role(request: incoming.Administration):
         return account_with_roles(account)
 
 
-@router.put("/add/child", tags=[TELEGRAM, PARENT], response_model=outgoing.Student)
+@router.put("/add/child", tags=[TELEGRAM, PARENT], response_model=outgoing.Child)
 async def add_child(request: incoming.Child):
     with get_session() as session:
         account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
@@ -302,7 +302,7 @@ async def add_child(request: incoming.Child):
         session.commit()
 
         return outgoing.Child(
-            child_id = child.id,
+            child_id=child.id,
             subclass=item.Subclass(
                 id=child.subclass_id,
                 educational_level=child.subclass.educational_level,
@@ -314,7 +314,8 @@ async def add_child(request: incoming.Child):
             ),
         )
 
-@router.put('/delete/child', tags=[TELEGRAM, PARENT])
+
+@router.put("/delete/child", tags=[TELEGRAM, PARENT])
 async def remove_child(request: bot_incoming.Child):
     with get_session() as session:
         account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
@@ -330,10 +331,14 @@ async def remove_child(request: bot_incoming.Child):
                 status_code=409,
                 detail=f"User {account.telegram_id} does not have parent role",
             )
-        
+
         parent_id = role.parent.id
-        
-        child = session.query(database.Student).filter_by(parent_id=parent_id, id=request.child_id).first()
+
+        child = (
+            session.query(database.Student)
+            .filter_by(parent_id=parent_id, id=request.child_id)
+            .first()
+        )
 
         session.delete(child)
         session.add(role)

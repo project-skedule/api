@@ -234,6 +234,7 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
         return info.Lessons(
             data=[
                 item.Lesson(
+                    id = lesson.id,
                     lesson_number=item.LessonNumber(
                         id=lesson.lesson_number.id,
                         number=lesson.lesson_number.number,

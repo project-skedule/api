@@ -9,6 +9,7 @@ from models.bot.item.lesson_number import LessonNumber
 
 
 class Lesson(BaseModel):
+    id: int = Field(ge=1, le=2147483647)
     lesson_number: LessonNumber
     day_of_week: int = Field(ge=1, le=7)
     subject: str = Field(max_length=200)

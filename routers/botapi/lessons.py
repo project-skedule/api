@@ -51,6 +51,7 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
 
         returned_lesson = [
             item.Lesson(
+                id=lesson.id,
                 lesson_number=item.LessonNumber(
                     id=lesson.lesson_number.id,
                     number=lesson.lesson_number.number,
@@ -137,6 +138,7 @@ async def get_lesson_for_range(
                 lesson.day_of_week, []
             ) + [
                 item.Lesson(
+                    id=lesson.id,
                     lesson_number=item.LessonNumber(
                         id=lesson.lesson_number.id,
                         number=lesson.lesson_number.number,
@@ -227,6 +229,7 @@ async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
                 detail=f"Lesson with params {request.day_of_week=} {request.lesson_number=} {request.data=} {request.school_id=} does not exist",
             )
         return item.Lesson(
+            id=lesson.id,
             lesson_number=item.LessonNumber(
                 id=lesson.lesson_number.id,
                 number=lesson.lesson_number.number,

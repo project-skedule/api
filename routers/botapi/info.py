@@ -241,7 +241,7 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
                         time_end=lesson.lesson_number.time_end,
                     ),
                     subject=lesson.subject,
-                    teacher=lesson.teacher.name,
+                    teacher=item.Teacher(name=lesson.teacher.name, id=lesson.teacher.id),
                     day_of_week=lesson.day_of_week,
                     subclasses=[
                         item.Subclass(

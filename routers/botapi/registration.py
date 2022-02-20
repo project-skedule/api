@@ -209,6 +209,7 @@ async def register_parent(request: incoming.Parent):
                     parent_id=role.parent.id,
                     children=[
                         outgoing.Child(
+                            child_id=student.id,
                             subclass=item.Subclass(
                                 id=student.subclass.id,
                                 educational_level=student.subclass.educational_level,

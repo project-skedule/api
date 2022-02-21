@@ -234,7 +234,7 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
         return info.Lessons(
             data=[
                 item.Lesson(
-                    id = lesson.id,
+                    id=lesson.id,
                     lesson_number=item.LessonNumber(
                         id=lesson.lesson_number.id,
                         number=lesson.lesson_number.number,
@@ -242,7 +242,9 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
                         time_end=lesson.lesson_number.time_end,
                     ),
                     subject=lesson.subject,
-                    teacher=item.Teacher(name=lesson.teacher.name, id=lesson.teacher.id),
+                    teacher=item.Teacher(
+                        name=lesson.teacher.name, id=lesson.teacher.id
+                    ),
                     day_of_week=lesson.day_of_week,
                     subclasses=[
                         item.Subclass(

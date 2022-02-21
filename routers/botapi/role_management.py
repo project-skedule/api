@@ -16,7 +16,7 @@ from config import get_session
 from extra import create_logger_dependency
 from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER, TELEGRAM
 from models import database
-from models.bot import item
+from models.bot import item, incoming as bot_incoming
 from models.bot.telegram import incoming, outgoing
 from models.bot import item
 
@@ -75,6 +75,7 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
                         parent_id=role.parent.id,
                         children=[
                             outgoing.Child(
+                                child_id=child.id,
                                 subclass=item.Subclass(
                                     id=child.subclass.id,
                                     educational_level=child.subclass.educational_level,
@@ -261,7 +262,7 @@ def add_administration_role(request: incoming.Administration):
         return account_with_roles(account)
 
 
-@router.put("/add/child", tags=[TELEGRAM, PARENT], response_model=outgoing.Student)
+@router.put("/add/child", tags=[TELEGRAM, PARENT], response_model=outgoing.Child)
 async def add_child(request: incoming.Child):
     with get_session() as session:
         account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
@@ -300,7 +301,8 @@ async def add_child(request: incoming.Child):
         session.add(account)
         session.commit()
 
-        return outgoing.Student(
+        return outgoing.Child(
+            child_id=child.id,
             subclass=item.Subclass(
                 id=child.subclass_id,
                 educational_level=child.subclass.educational_level,
@@ -311,6 +313,38 @@ async def add_child(request: incoming.Child):
                 id=child.subclass.school_id, name=child.subclass.school.name
             ),
         )
+
+
+@router.put("/delete/child", tags=[TELEGRAM, PARENT])
+async def remove_child(request: bot_incoming.Child):
+    with get_session() as session:
+        account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
+
+        for role in account.roles:
+            if role.role_type == database.RoleEnum.PARENT:
+                break
+        else:
+            logger.debug(
+                f"Raised an exception because user {account.telegram_id} does not have parent role"
+            )
+            raise HTTPException(
+                status_code=409,
+                detail=f"User {account.telegram_id} does not have parent role",
+            )
+
+        parent_id = role.parent.id
+
+        child = (
+            session.query(database.Student)
+            .filter_by(parent_id=parent_id, id=request.child_id)
+            .first()
+        )
+
+        session.delete(child)
+        session.add(role)
+        session.commit()
+
+    return {}
 
 
 @router.put(

@@ -79,8 +79,7 @@ def get_session():
                 break
     except HTTPException as error:
         raise error from error
-    except Exception as error:
-        DEFAULT_LOGGER.error(str(error))
+    except:
         session.rollback()
     finally:
         session.close()

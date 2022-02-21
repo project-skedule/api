@@ -33,7 +33,7 @@ async def create_new_teacher(teacher: incoming.Teacher) -> outgoing.Teacher:
         )
         if check_unique:
             logger.debug(
-                f"Raise an expection because the teacher with name {teacher.name} already exists in school with id {teacher.school_id}"
+                f"Raise an expection because the teacher with name {teacher.name} already exists in school with id {school.id}"
             )
             raise HTTPException(
                 status_code=409,
@@ -41,7 +41,7 @@ async def create_new_teacher(teacher: incoming.Teacher) -> outgoing.Teacher:
             )
         teacher = database.Teacher(name=teacher.name)
         logger.info(
-            f"Adding teacher with name {teacher.name} to school with id {teacher.school_id}"
+            f"Adding teacher with name {teacher.name} to school with id {school.id}"
         )
         school.teachers.append(teacher)
         session.add(teacher)

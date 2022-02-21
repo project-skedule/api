@@ -19,4 +19,3 @@ from models.bot.incoming.teacher import Teacher
 from models.bot.incoming.teacher_by_distance import TeacherByDistance
 from models.bot.incoming.teachers import Teachers
 from models.bot.incoming.subclass_params import SubclassParams
-from models.bot.incoming.child import Child

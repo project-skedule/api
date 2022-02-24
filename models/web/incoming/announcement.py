@@ -13,7 +13,7 @@ class Teacher(BaseModel):
 
 
 class Announcement(BaseModel):
-    link: str = Field(max_length=250, min_length=20, regex="https://telegra.ph/.*")
+    text: str = Field(max_length=2500, min_length=20)
     school_id: int = Field(ge=1, le=2147483647)
     filters: List[Union[Teacher, Subclass]]
     resend_to_parents: bool

@@ -36,12 +36,12 @@ async def post_new_announcement(request: incoming.Announcement):
 
         for filter_object in request.filters:
             if isinstance(filter_object, incoming.announcement.Teacher):
-                teachers_roles = (
+                teachers_objects = (
                     session.query(database.Teacher)
                     .filter_by(school_id=school.id, name=filter_object.name)
                     .all()
                 )
-                for teacher in teachers_roles:
+                for teacher in teachers_objects:
                     teachers.add(teacher)
             elif isinstance(filter_object, incoming.announcement.Subclass):
                 filtered = False
@@ -136,11 +136,14 @@ async def post_new_announcement(request: incoming.Announcement):
             )
 
             for parent in parents_db:
-                if any(child.subclass in subclasses for child in parent.children):
+                if any(
+                    child.subclass in subclasses for child in parent.parent.children
+                ):
                     parents.add(parent)
 
             account_ids = [role.account_id for role in parents]
-            accounts_db = session.query(database.Role).all()
+
+            accounts_db = session.query(database.Account).all()
             accounts_db = list(
                 filter(lambda account: account.id in account_ids, accounts_db)
             )
@@ -152,7 +155,7 @@ async def post_new_announcement(request: incoming.Announcement):
                 roles.add(role)
 
         announcement = database.Announcement(
-            link=request.link, school_id=school.id, roles=list(roles)
+            link=request.text, school_id=school.id, roles=list(roles)
         )
 
         session.add(announcement)
@@ -161,7 +164,7 @@ async def post_new_announcement(request: incoming.Announcement):
         async with aiohttp.ClientSession() as http_session:
             async with http_session.post(
                 f"http://{TRANSMITTER_HOST}:{TRANSMITTER_PORT}/api/trans/redirect/telegram",
-                json={"link": request.link, "telegram_ids": list(telegram_ids)},
+                json={"text": request.text, "telegram_ids": list(telegram_ids)},
             ) as response:
                 if response.status != 200:
                     logger.error(

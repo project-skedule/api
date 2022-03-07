@@ -4,6 +4,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
+from api_types.types import TID
 
 import valid_db_requests as db_validated
 from config import (
@@ -114,9 +115,9 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
 
 
 @router.get("/get", tags=[TELEGRAM], response_model=outgoing.Account)
-async def get_by_id(request: incoming.Account):
+async def get_by_id(telegram_id: TID):
     with get_session() as session:
-        account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
+        account = db_validated.get_account_by_telegram_id(session, telegram_id)
         return account_with_roles(account)
 
 

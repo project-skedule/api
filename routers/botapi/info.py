@@ -1,8 +1,11 @@
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
+from typing import Optional
+from typing_extensions import Annotated
+from pydantic import Field
 import Levenshtein  # pyright: reportMissingTypeStubs=false
 from fastapi import APIRouter, Depends
-
+from api_types import ID, TID
 import valid_db_requests as db_validated
 from config import API_INFO_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
@@ -36,10 +39,10 @@ logger.info(f"Info router created on {API_PREFIX+API_INFO_PREFIX}")
     response_model=info.Subclasses,
 )
 async def get_subclasses(
-    request: incoming.Subclasses,
+    school_id: ID,
 ) -> info.Subclasses:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         return info.Subclasses(
             data=[
                 item.Subclass(
@@ -59,10 +62,10 @@ async def get_subclasses(
     response_model=info.Teachers,
 )
 async def get_teachers(
-    request: incoming.Teachers,
+    school_id: ID,
 ) -> info.Teachers:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         return info.Teachers(
             data=[
                 item.Teacher(
@@ -80,10 +83,10 @@ async def get_teachers(
     response_model=info.Parallels,
 )
 async def get_parallels(
-    request: incoming.Parallels,
+    school_id: ID,
 ) -> info.Parallels:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         return info.Parallels(
             data=list({i.educational_level for i in school.subclasses})
         )
@@ -93,13 +96,21 @@ async def get_parallels(
     "/teachers/distance", tags=[INFO, TEACHER, TELEGRAM], response_model=info.Teachers
 )
 async def get_teacher_by_levenshtein(
-    request: incoming.TeacherByDistance,
+    school_id: ID,
+    name: Annotated[str, Field(max_length=200, min_length=1)],
 ) -> info.Teachers:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
+        name = name.lower()
         teachers = list(school.teachers)
         teachers.sort(
-            key=lambda teacher: Levenshtein.distance(teacher.name, request.name)
+            key=lambda teacher: (
+                name not in teacher.name.lower(),
+                teacher.name.lower().find(name)
+                if teacher.name.lower().find(name) != -1
+                else len(teacher.name) + 1,
+                Levenshtein.distance(teacher.name.lower(), name),
+            )
         )
         teachers = teachers[:MAX_LEVENSHTEIN_RESULTS]
         return info.Teachers(
@@ -118,12 +129,14 @@ async def get_teacher_by_levenshtein(
     tags=[INFO, SUBCLASS, WEBSITE, TELEGRAM],
     response_model=info.Letters,
 )
-async def get_letters(request: incoming.Letters) -> info.Letters:
+async def get_letters(
+    school_id: ID, educational_level: Annotated[int, Field(ge=0, le=12)]
+) -> info.Letters:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         data = []
         for i in school.subclasses:
-            if i.educational_level == request.educational_level:
+            if i.educational_level == educational_level:
                 l = i.identificator
                 if l not in data:
                     data.append(l)
@@ -136,15 +149,17 @@ async def get_letters(request: incoming.Letters) -> info.Letters:
     response_model=info.Groups,
 )
 async def get_groups(
-    request: incoming.Groups,
+    school_id: ID,
+    educational_level: Annotated[int, Field(ge=0, le=12)],
+    identificator: Annotated[str, Field(max_length=50)],
 ) -> info.Groups:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         data = []
         for i in school.subclasses:
             if (
-                i.educational_level == request.educational_level
-                and i.identificator == request.identificator
+                i.educational_level == educational_level
+                and i.identificator == identificator
             ):
                 g = i.additional_identificator
                 if g not in data:
@@ -172,10 +187,10 @@ async def get_school() -> info.Schools:
     response_model=info.Corpuses,
 )
 async def get_corpuses(
-    request: incoming.Corpuses,
+    school_id: ID,
 ) -> info.Corpuses:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         return info.Corpuses(
             data=[
                 item.Corpus(name=corpus.name, address=corpus.address, id=corpus.id)
@@ -190,12 +205,12 @@ async def get_corpuses(
     response_model=info.Schools,
 )
 async def get_schools_by_levenshtein(
-    request: incoming.SchoolsByDistance,
+    name: Annotated[str, Field(max_length=200, min_length=1)],
 ) -> info.Schools:
     with get_session() as session:
         schools = (
             session.query(database.School)
-            .filter(database.School.name.contains(request.name))
+            .filter(database.School.name.contains(name))
             .limit(MAX_LEVENSHTEIN_RESULTS)
             .all()
         )
@@ -207,9 +222,9 @@ async def get_schools_by_levenshtein(
 @router.get(
     "/cabinets/all", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
 )
-async def get_cabinets(request: incoming.Cabinets) -> info.Cabinets:
+async def get_cabinets(school_id: ID) -> info.Cabinets:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         return info.Cabinets(
             data=[
                 item.Cabinet(
@@ -228,9 +243,9 @@ async def get_cabinets(request: incoming.Cabinets) -> info.Cabinets:
 
 
 @router.get("/lessons/all", tags=[INFO, LESSON, TELEGRAM], response_model=info.Lessons)
-async def get_lessons(request: incoming.Lessons) -> info.Lessons:
+async def get_lessons(school_id: ID) -> info.Lessons:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         return info.Lessons(
             data=[
                 item.Lesson(
@@ -282,9 +297,9 @@ async def get_lessons(request: incoming.Lessons) -> info.Lessons:
     tags=[INFO, LESSON_NUMBER, TELEGRAM],
     response_model=info.LessonNumbers,
 )
-async def get_all_timetables(request: incoming.LessonNumbers) -> info.LessonNumbers:
+async def get_all_timetables(school_id: ID) -> info.LessonNumbers:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         timetables = (
             session.query(database.Lesson_number).filter_by(school_id=school.id).all()
         )
@@ -304,27 +319,32 @@ async def get_all_timetables(request: incoming.LessonNumbers) -> info.LessonNumb
 @router.get(
     "/cabinets/free", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
 )
-async def get_free_cabinet(request: incoming.FreeCabinet) -> info.Cabinets:
+async def get_free_cabinet(
+    corpus_id: ID,
+    day_of_week: Annotated[int, Field(ge=1, le=7)],
+    lesson_number: Optional[Annotated[int, Field(ge=0, le=20)]] = None,
+    floor: Optional[Annotated[int, Field(ge=-10, le=100)]] = None,
+) -> info.Cabinets:
     with get_session() as session:
-        corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
+        corpus = db_validated.get_corpus_by_id(session, corpus_id)
 
         cabinets = session.query(database.Cabinet).filter_by(corpus_id=corpus.id)
 
-        if request.floor is not None:
-            cabinets = cabinets.filter_by(floor=request.floor)
+        if floor is not None:
+            cabinets = cabinets.filter_by(floor=floor)
         cabinets = cabinets.all()
 
         cabinets_ids = {cabinet.id for cabinet in cabinets}
 
         lessons = (
             session.query(database.Lesson)
-            .filter_by(corpus_id=corpus.id, day_of_week=request.day_of_week)
+            .filter_by(corpus_id=corpus.id, day_of_week=day_of_week)
             .all()
         )
 
-        if request.lesson_number is not None:
+        if lesson_number is not None:
             lessons = filter(
-                lambda lesson: lesson.lesson_number.number == request.lesson_number,
+                lambda lesson: lesson.lesson_number.number == lesson_number,
                 lessons,
             )
         lessons = list(lessons)
@@ -352,9 +372,9 @@ async def get_free_cabinet(request: incoming.FreeCabinet) -> info.Cabinets:
 
 
 @router.get("/corpus/canteen", tags=[CORPUS, TELEGRAM], response_model=info.Canteen)
-async def get_canteen_text(request: incoming.Canteen) -> info.Canteen:
+async def get_canteen_text(corpus_id: ID) -> info.Canteen:
     with get_session() as session:
-        corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
+        corpus = db_validated.get_corpus_by_id(session, corpus_id)
 
         if corpus.canteen_text is None:
             text = "Ваша школа не предоставила расписание столовой для этого корпуса"
@@ -365,15 +385,20 @@ async def get_canteen_text(request: incoming.Canteen) -> info.Canteen:
 
 
 @router.get("/subclass/params", tags=[SUBCLASS, TELEGRAM], response_model=item.Subclass)
-async def get_subclass_by_params(request: incoming.SubclassParams) -> item.Subclass:
+async def get_subclass_by_params(
+    school_id: ID,
+    educational_level: Annotated[int, Field(ge=0, le=12)],
+    identificator: Annotated[str, Field(max_length=50)],
+    additional_identificator: Annotated[str, Field(max_length=50)],
+) -> item.Subclass:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        school = db_validated.get_school_by_id(session, school_id)
         subclass = db_validated.get_subclass_by_params(
             session,
             school.id,
-            request.educational_level,
-            request.identificator,
-            request.additional_identificator,
+            educational_level,
+            identificator,
+            additional_identificator,
         )
         return item.Subclass(
             educational_level=subclass.educational_level,
@@ -384,12 +409,10 @@ async def get_subclass_by_params(request: incoming.SubclassParams) -> item.Subcl
 
 
 @router.get("/check/telegramid", tags=[TELEGRAM], response_model=item.Result)
-async def check_existence(request: telegram.incoming.Account) -> item.Result:
+async def check_existence(telegram_id: TID) -> item.Result:
     with get_session() as session:
         account = (
-            session.query(database.Account)
-            .filter_by(telegram_id=request.telegram_id)
-            .first()
+            session.query(database.Account).filter_by(telegram_id=telegram_id).first()
         )
         if account is None:
             return item.Result(data=False)

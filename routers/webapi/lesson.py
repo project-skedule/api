@@ -41,6 +41,7 @@ async def create_new_lesson(lesson: incoming.Lesson) -> outgoing.Lesson:
                 cabinet_id=cabinet.id,
                 lesson_number_id=lesson_number.id,
                 day_of_week=lesson.day_of_week,
+                teacher_id=teacher.id,
             )
             .all()
         )

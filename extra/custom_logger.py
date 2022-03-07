@@ -61,10 +61,10 @@ class CustomizeLogger:
         logger.remove()
         logger.add(str(filepath), **kwargs)
         logging.basicConfig(handlers=[InterceptHandler()], level=0)
-        logging.getLogger("uvicorn.access").handlers = [InterceptHandler()]
-        for _log in ["uvicorn", "uvicorn.error", "fastapi"]:
-            _logger = logging.getLogger(_log)
-            _logger.handlers = [InterceptHandler()]
+        # logging.getLogger("uvicorn.access").handlers = [InterceptHandler()]
+        # for _log in ["uvicorn", "uvicorn.error", "fastapi"]:
+        # _logger = logging.getLogger(_log)
+        # _logger.handlers = [InterceptHandler()]
 
         return logger.bind(request_id=None, method=None)
 

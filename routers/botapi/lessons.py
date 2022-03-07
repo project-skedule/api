@@ -1,10 +1,12 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
+from typing_extensions import Annotated
 
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
 
 from fastapi import APIRouter, Depends, HTTPException
-
+from pydantic import Field
+from api_types.types import ID
 import valid_db_requests as db_validated
 from config import API_LESSON_GETTER_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
@@ -22,27 +24,40 @@ logger.info(f"Lesson Getter router created on {API_PREFIX+API_LESSON_GETTER_PREF
 
 
 @router.get("/day", tags=[LESSON, TELEGRAM], response_model=info.LessonsForDay)
-async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsForDay:
+async def get_lesson_for_day(
+    school_id: ID,
+    day_of_week: Annotated[int, Field(ge=1, le=7)],
+    teacher_id: Optional[ID] = None,
+    subclass_id: Optional[ID] = None,
+) -> info.LessonsForDay:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
-        if isinstance(request.data, incoming.Teacher):
-            teacher = db_validated.get_teacher_by_id(session, request.data.teacher_id)
+        if teacher_id is not None and subclass_id is not None:
+            raise HTTPException(
+                status_code=422, detail="You must specify a subclass_id or a teacher_id"
+            )
+
+        if teacher_id is None and subclass_id is None:
+            raise HTTPException(
+                status_code=422, detail="You must specify a subclass_id or a teacher_id"
+            )
+
+        school = db_validated.get_school_by_id(session, school_id)
+        if teacher_id is not None:
+            teacher = db_validated.get_teacher_by_id(session, teacher_id)
             lessons = (
                 session.query(database.Lesson)
                 .filter_by(
-                    day_of_week=request.day_of_week,
+                    day_of_week=day_of_week,
                     teacher_id=teacher.id,
                     school_id=school.id,
                 )
                 .all()
             )
         else:
-            subclass = db_validated.get_subclass_by_id(
-                session, request.data.subclass_id
-            )
+            subclass = db_validated.get_subclass_by_id(session, subclass_id)
             lessons = (
                 session.query(database.Lesson)
-                .filter_by(day_of_week=request.day_of_week, school_id=school.id)
+                .filter_by(day_of_week=day_of_week, school_id=school.id)
                 .filter(database.Lesson.subclasses.contains(subclass))
                 .all()
             )
@@ -86,23 +101,35 @@ async def get_lesson_for_day(request: incoming.LessonsForDay) -> info.LessonsFor
             )
             for lesson in lessons
         ]
-        return info.LessonsForDay(
-            day_of_week=request.day_of_week, lessons=returned_lesson
-        )
+        return info.LessonsForDay(day_of_week=day_of_week, lessons=returned_lesson)
 
 
 @router.get("/range", tags=[LESSON, TELEGRAM], response_model=info.LessonsForRange)
 async def get_lesson_for_range(
-    request: incoming.LessonsForRange,
+    school_id: ID,
+    start_index: Annotated[int, Field(ge=1, le=7)],
+    end_index: Annotated[int, Field(ge=1, le=7)],
+    teacher_id: Optional[ID] = None,
+    subclass_id: Optional[ID] = None,
 ) -> info.LessonsForRange:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        if teacher_id is not None and subclass_id is not None:
+            raise HTTPException(
+                status_code=422, detail="You must specify a subclass_id or a teacher_id"
+            )
+
+        if teacher_id is None and subclass_id is None:
+            raise HTTPException(
+                status_code=422, detail="You must specify a subclass_id or a teacher_id"
+            )
+
+        school = db_validated.get_school_by_id(session, school_id)
 
         logger.debug(
-            f"Checking if start_index ({request.start_index}) < end_index ({request.end_index})"
+            f"Checking if start_index ({start_index}) < end_index ({end_index})"
         )
 
-        if request.start_index > request.end_index:
+        if start_index > end_index:
             logger.debug(
                 "Raised an exception because start_index must be less than or equal to end_index"
             )
@@ -111,22 +138,20 @@ async def get_lesson_for_range(
                 detail="Invalid start_index and and end_index. start_index must be less than or equal to start_index",
             )
 
-        if isinstance(request.data, incoming.Teacher):
-            teacher = db_validated.get_teacher_by_id(session, request.data.teacher_id)
+        if teacher_id is not None:
+            teacher = db_validated.get_teacher_by_id(session, teacher_id)
             lessons = session.query(database.Lesson).filter_by(
                 teacher_id=teacher.id, school_id=school.id
             )
         else:
-            subclass = db_validated.get_subclass_by_id(
-                session, request.data.subclass_id
-            )
+            subclass = db_validated.get_subclass_by_id(session, subclass_id)
 
             lessons = (
                 session.query(database.Lesson)
                 .filter_by(school_id=school.id)
                 .filter(database.Lesson.subclasses.contains(subclass))
             )
-        days = list(range(request.start_index, request.end_index + 1))
+        days = list(range(start_index, end_index + 1))
         lessons = lessons.filter(database.Lesson.day_of_week.in_(days)).all()
 
         lessons = sorted(lessons, key=lambda x: x.lesson_number.number)
@@ -186,47 +211,61 @@ async def get_lesson_for_range(
 
 
 @router.get("/certain", tags=[LESSON, TELEGRAM], response_model=item.Lesson)
-async def get_certain_lesson(request: incoming.CertainLesson) -> item.Lesson:
+async def get_certain_lesson(
+    school_id: ID,
+    lesson_number: Annotated[int, Field(ge=0, le=20)],
+    day_of_week: Annotated[int, Field(ge=1, le=7)],
+    teacher_id: Optional[ID] = None,
+    subclass_id: Optional[ID] = None,
+) -> item.Lesson:
     with get_session() as session:
-        school = db_validated.get_school_by_id(session, request.school_id)
+        if teacher_id is not None and subclass_id is not None:
+            raise HTTPException(
+                status_code=422, detail="You must specify a subclass_id or a teacher_id"
+            )
+
+        if teacher_id is None and subclass_id is None:
+            raise HTTPException(
+                status_code=422, detail="You must specify a subclass_id or a teacher_id"
+            )
+
+        school = db_validated.get_school_by_id(session, school_id)
         logger.debug(
-            f"Searching lesson number with number {request.lesson_number} and school id {request.school_id}"
+            f"Searching lesson number with number {lesson_number} and school id {school_id}"
         )
         lesson_number = session.query(database.Lesson_number).filter_by(
-            school_id=school.id, number=request.lesson_number
+            school_id=school.id, number=lesson_number
         )
         if lesson_number is None:
             logger.debug(
-                f"Raised an exception because lesson number with number {request.lesson_number} and school id {request.school_id} does not exist"
+                f"Raised an exception because lesson number with number {lesson_number} and school id {school_id} does not exist"
             )
             raise HTTPException(
                 status_code=409,
-                detail=f"Lesson number with number {request.lesson_number} and school id {request.school_id} does not exist",
+                detail=f"Lesson number with number {lesson_number} and school id {school_id} does not exist",
             )
-        if isinstance(request.data, incoming.Teacher):
-            teacher = db_validated.get_teacher_by_id(session, request.data.teacher_id)
+        if teacher_id is not None:
+            teacher = db_validated.get_teacher_by_id(session, teacher_id)
             lessons = session.query(database.Lesson).filter_by(
                 teacher_id=teacher.id, school_id=school.id
             )
         else:
-            subclass = db_validated.get_subclass_by_id(
-                session, request.data.subclass_id
-            )
+            subclass = db_validated.get_subclass_by_id(session, subclass_id)
             lessons = session.query(database.Lesson).filter_by(
                 school_id=school.id, subclass_id=subclass.id
             )
 
         lesson = lessons.filter_by(
-            day_of_week=request.day_of_week,
+            day_of_week=day_of_week,
             lesson_number_id=lesson_number.id,
         ).first()
         if lesson is None:
             logger.debug(
-                f"Raised an exception because lesson with params {request.day_of_week=} {request.lesson_number=} {request.data=} {request.school_id=} does not exist"
+                f"Raised an exception because lesson with params {day_of_week=} {lesson_number=} {(teacher_id, subclass_id)=} {school_id=} does not exist"
             )
             raise HTTPException(
                 status_code=422,
-                detail=f"Lesson with params {request.day_of_week=} {request.lesson_number=} {request.data=} {request.school_id=} does not exist",
+                detail=f"Lesson with params {day_of_week=} {lesson_number=} {(teacher_id, subclass_id)=} {school_id=} does not exist",
             )
         return item.Lesson(
             id=lesson.id,

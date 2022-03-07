@@ -1,11 +1,15 @@
 from typing import Any, Dict
 from fastapi import Request
 
+FULL_LOG = False
+
 
 def create(logger: Any):
     async def logging_dependency(request: Request):
         try:
-            logger.debug(f"{request.method} {request.url}")
+            logger.info(f"{request.method} {request.url}")
+            if not FULL_LOG:
+                return
             logger.debug("Params:")
             params: Dict[
                 str, Any

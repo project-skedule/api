@@ -235,7 +235,7 @@ async def get_certain_lesson(
         )
         lesson_number = session.query(database.Lesson_number).filter_by(
             school_id=school.id, number=lesson_number
-        )
+        ).first()
         if lesson_number is None:
             logger.debug(
                 f"Raised an exception because lesson number with number {lesson_number} and school id {school_id} does not exist"
@@ -251,8 +251,11 @@ async def get_certain_lesson(
             )
         else:
             subclass = db_validated.get_subclass_by_id(session, subclass_id)
-            lessons = session.query(database.Lesson).filter_by(
-                school_id=school.id, subclass_id=subclass.id
+
+            lessons = (
+                session.query(database.Lesson)
+                .filter_by(school_id=school.id)
+                .filter(database.Lesson.subclasses.contains(subclass))
             )
 
         lesson = lessons.filter_by(
@@ -265,7 +268,7 @@ async def get_certain_lesson(
             )
             raise HTTPException(
                 status_code=422,
-                detail=f"Lesson with params {day_of_week=} {lesson_number=} {(teacher_id, subclass_id)=} {school_id=} does not exist",
+                detail=f"Lesson with params {day_of_week=} {lesson_number.number=} {(teacher_id, subclass_id)=} {school_id=} does not exist",
             )
         return item.Lesson(
             id=lesson.id,

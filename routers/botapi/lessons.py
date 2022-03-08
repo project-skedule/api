@@ -233,9 +233,11 @@ async def get_certain_lesson(
         logger.debug(
             f"Searching lesson number with number {lesson_number} and school id {school_id}"
         )
-        lesson_number = session.query(database.Lesson_number).filter_by(
-            school_id=school.id, number=lesson_number
-        ).first()
+        lesson_number = (
+            session.query(database.Lesson_number)
+            .filter_by(school_id=school.id, number=lesson_number)
+            .first()
+        )
         if lesson_number is None:
             logger.debug(
                 f"Raised an exception because lesson number with number {lesson_number} and school id {school_id} does not exist"

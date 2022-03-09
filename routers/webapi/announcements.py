@@ -1,6 +1,7 @@
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
 
+from typing import List
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 import valid_db_requests as db_validated
@@ -12,6 +13,7 @@ from extra.tags import ANNOUNCEMENTS, WEBSITE
 from models import database
 from models.web import incoming, outgoing
 import aiohttp
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix=API_PREFIX + API_ANNOUNCEMENTS_PREFIX,
@@ -210,3 +212,32 @@ def announcement_preview(request, session):
     session.add(announcement)
     session.commit()
     return teachers, subclasses, telegram_ids
+
+
+class SimpleAnnouncement(BaseModel):
+    text: str
+
+
+@router.post(
+    "/toall",
+    tags=[ANNOUNCEMENTS, WEBSITE],
+    response_model=List[int],
+)
+async def send_to_all(request: SimpleAnnouncement):
+    with get_session() as session:
+        telegram_ids = [
+            acc.telegram_id for acc in session.query(database.Account).all()
+        ]
+        async with aiohttp.ClientSession() as http_session:
+            async with http_session.post(
+                f"http://{TRANSMITTER_HOST}:{TRANSMITTER_PORT}/api/trans/redirect/telegram",
+                json={"text": request.text, "telegram_ids": list(telegram_ids)},
+            ) as response:
+                if response.status != 200:
+                    logger.error(
+                        f"Can not post announcement to {TRANSMITTER_HOST}:{TRANSMITTER_PORT}. More: {await response.text()}"
+                    )
+                    raise HTTPException(
+                        status_code=500, detail="Can not post your announcement"
+                    )
+        return telegram_ids

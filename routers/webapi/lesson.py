@@ -2,7 +2,7 @@
 
 
 from fastapi import APIRouter, Depends, HTTPException
-
+from api_types import ID
 import valid_db_requests as db_validated
 from config import API_LESSON_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
@@ -134,3 +134,12 @@ async def update_lesson(request: updating.Lesson):
         session.commit()
 
         return outgoing.Lesson(id=lesson.id)
+
+
+@router.delete("/delete", tags=[LESSON, WEBSITE], response_model=outgoing.Lesson)
+async def delete_lesson(lesson_id: ID):
+    with get_session() as session:
+        lesson = db_validated.get_lesson_by_id(session, lesson_id)
+        session.delete(lesson)
+        session.commit()
+        return outgoing.Lesson(id=lesson_id)

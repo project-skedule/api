@@ -1,6 +1,6 @@
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
-from typing import Optional
+from typing import List, Optional
 from typing_extensions import Annotated
 from pydantic import Field
 import Levenshtein  # pyright: reportMissingTypeStubs=false
@@ -417,3 +417,9 @@ async def check_existence(telegram_id: TID) -> item.Result:
         if account is None:
             return item.Result(data=False)
         return item.Result(data=True)
+
+
+@router.get("/telegramid/all", tags=[TELEGRAM], response_model=List[int])
+async def get_all_users() -> List[int]:
+    with get_session() as session:
+        return [acc.telegram_id for acc in session.query(database.Account).all()]

@@ -12,6 +12,8 @@ from routers.webapi.announcements import router as announcements_router
 from routers.webapi.school import router as school_router
 from routers.webapi.subclass import router as subclass_router
 from routers.webapi.teacher import router as teacher_router
+from routers.webapi.stats import router as stats_router
+
 
 routers: List[APIRouter] = list(
     map(lambda x: globals()[x], filter(lambda x: "router" in x, globals().keys()))

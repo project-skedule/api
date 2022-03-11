@@ -28,6 +28,7 @@ API_LESSON_GETTER_PREFIX = "/lesson/get"
 API_ROLE_MANAGEMENT_PREFIX = "/rolemanagement"
 API_ID_GETTER_PREFIX = "/idgetter"
 API_ANNOUNCEMENTS_PREFIX = "/announcements"
+API_STATISTICS_PREFIX = "/stats"
 MAX_LEVENSHTEIN_RESULTS = 5
 API_HOST = "api"
 # if changed here, should also be changed in docker file and docker compose

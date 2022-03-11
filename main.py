@@ -11,7 +11,7 @@ logger.info("App created")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[WEBSITE_HOST],
+    allow_origins=["http://dartt0n.xyz:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

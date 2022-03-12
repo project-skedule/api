@@ -89,7 +89,7 @@ async def get_parallel_count():
         return outgoing.Statistics(data=dict(data))
 
 
-@router.get("/children", tags=[STATS], response_model=outgoing.Statistics)
+@router.get("/childrencount", tags=[STATS], response_model=outgoing.Statistics)
 async def get_children_count():
     with get_session() as session:
         parents = (
@@ -132,3 +132,34 @@ async def get_teacher_parallel():
                 data[subclass] += 1
 
         return outgoing.Statistics(data=dict(data))
+
+
+@router.get("/parentchildren", tags=[STATS], response_model=outgoing.Statistics)
+async def get_children_for_parents():
+    with get_session() as session:
+        parents = (
+            session.query(database.Role)
+            .filter_by(role_type=database.RoleEnum.PARENT)
+            .all()
+        )
+
+        data = defaultdict(lambda: 0)
+
+        for parent in parents:
+            for child in parent.parent.children:
+                data[child.subclass.educational_level] += 1
+
+        return outgoing.Statistics(data=dict(data))
+
+
+@router.get("/parentswithchildren", tags=[STATS], response_model=Count)
+async def get_parent_with_children():
+    with get_session() as session:
+        parents = (
+            session.query(database.Role)
+            .filter_by(role_type=database.RoleEnum.PARENT)
+            .all()
+        )
+        parents = list(filter(lambda x: len(x.parent.children) >= 1, parents))
+
+        return Count(count=len(parents))

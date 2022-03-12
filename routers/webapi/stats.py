@@ -86,9 +86,7 @@ async def get_parallel_count():
         for student in students:
             data[student.student.subclass.educational_level] += 1
 
-        return outgoing.Statistics(
-            data=[outgoing.Stat(number=ed, occurrences=num) for ed, num in data.items()]
-        )
+        return outgoing.Statistics(data=dict(data))
 
 
 @router.get("/children", tags=[STATS], response_model=outgoing.Statistics)
@@ -103,12 +101,7 @@ async def get_children_count():
         for parent in parents:
             data[len(parent.parent.children)] += 1
 
-        return outgoing.Statistics(
-            data=[
-                outgoing.Stat(number=children, occurrences=cnt)
-                for children, cnt in data.items()
-            ]
-        )
+        return outgoing.Statistics(data=dict(data))
 
 
 @router.get("/teacherparallel", tags=[STATS], response_model=outgoing.Statistics)
@@ -138,9 +131,4 @@ async def get_teacher_parallel():
             for subclass in subclasses:
                 data[subclass] += 1
 
-        return outgoing.Statistics(
-            data=[
-                outgoing.Stat(number=parallel, occurrences=cnt)
-                for parallel, cnt in data.items()
-            ]
-        )
+        return outgoing.Statistics(data=dict(data))

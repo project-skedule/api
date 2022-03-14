@@ -8,6 +8,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import sqlalchemy
 from extra.custom_logger import CustomizeLogger
+from fastapi.security import OAuth2PasswordBearer
+
 
 ROOT_DIR = Path(__file__).parent
 LOGGER_CONFIG = ROOT_DIR / "logger_config.json"
@@ -29,13 +31,18 @@ API_ROLE_MANAGEMENT_PREFIX = "/rolemanagement"
 API_ID_GETTER_PREFIX = "/idgetter"
 API_ANNOUNCEMENTS_PREFIX = "/announcements"
 API_STATISTICS_PREFIX = "/stats"
+API_OAUTH_PREFIX = "/token"
+
+API_TOKEN_URl = API_PREFIX + API_OAUTH_PREFIX + "/auth"
+
 MAX_LEVENSHTEIN_RESULTS = 5
+
 API_HOST = "api"
-# if changed here, should also be changed in docker file and docker compose
 API_PORT = 8009
+
 TRANSMITTER_HOST = "transmitter"
 TRANSMITTER_PORT = 8998
-# load_dotenv(dotenv_path=ENV_PATH)
+
 DATABASE_USER = config("DATABASE_USER")
 DATABASE_PASSWORD = config("DATABASE_PASSWORD")
 DATABASE_HOST = config("DATABASE_HOST")
@@ -43,7 +50,13 @@ DATABASE_PORT = config("DATABASE_PORT")
 DATABASE_NAME = config("DATABASE_NAME")
 DATABASE_ENGINE = "mariadb"
 DATABASE_CONNECTOR = "mariadbconnector"
+
+JWT_SECRET = config("JWT_SECRET")
+JWT_ALGORITHM = "HS256"
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 DEFAULT_LOGGER = CustomizeLogger.make_logger(LOGGER_CONFIG)
+OAUTH2_SCHEME = OAuth2PasswordBearer(tokenUrl=API_TOKEN_URl)
 BASIC_STATUS_MAX_CHILDREN = 1
 
 __connect_address__ = (
@@ -61,19 +74,19 @@ __connect_address__ = (
 ENGINE = create_engine(__connect_address__)
 DEFAULT_LOGGER.debug(f"Connecting to database with {__connect_address__}")
 SESSION_FACTORY: Callable[..., ContextManager[Session]] = scoped_session(
-    sessionmaker(bind=ENGINE)
+    sessionmaker(bind=ENGINE, autocommit=False)
 )
-# get_session = SESSION_FACTORY
 
 
 @contextmanager
 def get_session():
+    session: Session = SESSION_FACTORY()
     try:
         for _ in range(10):
-            session: Session = SESSION_FACTORY()
             try:
                 session.execute("SELECT 1")
             except sqlalchemy.exc.InterfaceError as error:
+                session: Session = SESSION_FACTORY()
                 continue
             else:
                 yield session
@@ -83,5 +96,6 @@ def get_session():
     except Exception as error:
         DEFAULT_LOGGER.error(error)
         session.rollback()
+        raise HTTPException(status_code=500, detail="SQL Error")
     finally:
         session.close()

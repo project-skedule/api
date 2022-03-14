@@ -4,6 +4,7 @@
 from typing import List
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
+from extra.auth import get_current_user
 import valid_db_requests as db_validated
 from config import API_ANNOUNCEMENTS_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
@@ -26,7 +27,9 @@ router = APIRouter(
     tags=[ANNOUNCEMENTS, WEBSITE],
     response_model=outgoing.AnnouncementsPreview,
 )
-async def post_new_announcement(request: incoming.Announcement):
+async def post_new_announcement(
+    request: incoming.Announcement, _=Depends(get_current_user)
+):
     with get_session() as session:
         teachers, subclasses, telegram_ids = announcement_preview(request, session)
 
@@ -63,7 +66,9 @@ async def post_new_announcement(request: incoming.Announcement):
     tags=[ANNOUNCEMENTS, WEBSITE],
     response_model=outgoing.AnnouncementsPreview,
 )
-async def post_new_announcement(request: incoming.Announcement):
+async def post_new_announcement(
+    request: incoming.Announcement, _=Depends(get_current_user)
+):
     with get_session() as session:
         teachers, subclasses, telegram_ids = announcement_preview(request, session)
 
@@ -223,7 +228,7 @@ class SimpleAnnouncement(BaseModel):
     tags=[ANNOUNCEMENTS, WEBSITE],
     response_model=List[int],
 )
-async def send_to_all(request: SimpleAnnouncement):
+async def send_to_all(request: SimpleAnnouncement, _=Depends(get_current_user)):
     with get_session() as session:
         telegram_ids = [
             acc.telegram_id for acc in session.query(database.Account).all()

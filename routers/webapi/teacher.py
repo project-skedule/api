@@ -2,6 +2,7 @@
 
 
 from fastapi import APIRouter, Depends, HTTPException
+from extra.auth import get_current_user
 
 import valid_db_requests as db_validated
 from config import API_PREFIX, API_TEACHER_PREFIX
@@ -20,7 +21,9 @@ logger.info(f"Teacher router created on {API_PREFIX+API_TEACHER_PREFIX}")
 
 
 @router.post("/new", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
-async def create_new_teacher(teacher: incoming.Teacher) -> outgoing.Teacher:
+async def create_new_teacher(
+    teacher: incoming.Teacher, _=Depends(get_current_user)
+) -> outgoing.Teacher:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, teacher.school_id)
         logger.debug(
@@ -52,7 +55,7 @@ async def create_new_teacher(teacher: incoming.Teacher) -> outgoing.Teacher:
 
 
 @router.put("/update", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
-async def update_teacher(request: updating.Teacher):
+async def update_teacher(request: updating.Teacher, _=Depends(get_current_user)):
     with get_session() as session:
         teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
 

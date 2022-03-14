@@ -5,6 +5,7 @@ from typing_extensions import Annotated
 from pydantic import Field
 import Levenshtein  # pyright: reportMissingTypeStubs=false
 from fastapi import APIRouter, Depends
+from extra.auth import get_current_user
 from api_types import ID, TID
 import valid_db_requests as db_validated
 from config import API_INFO_PREFIX, API_PREFIX
@@ -38,9 +39,7 @@ logger.info(f"Info router created on {API_PREFIX+API_INFO_PREFIX}")
     tags=[INFO, SUBCLASS, WEBSITE, TELEGRAM],
     response_model=info.Subclasses,
 )
-async def get_subclasses(
-    school_id: ID,
-) -> info.Subclasses:
+async def get_subclasses(school_id: ID, _=Depends(get_current_user)) -> info.Subclasses:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
         return info.Subclasses(
@@ -61,9 +60,7 @@ async def get_subclasses(
     tags=[INFO, TEACHER, WEBSITE, TELEGRAM],
     response_model=info.Teachers,
 )
-async def get_teachers(
-    school_id: ID,
-) -> info.Teachers:
+async def get_teachers(school_id: ID, _=Depends(get_current_user)) -> info.Teachers:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
         return info.Teachers(
@@ -82,9 +79,7 @@ async def get_teachers(
     tags=[INFO, SUBCLASS, WEBSITE, TELEGRAM],
     response_model=info.Parallels,
 )
-async def get_parallels(
-    school_id: ID,
-) -> info.Parallels:
+async def get_parallels(school_id: ID, _=Depends(get_current_user)) -> info.Parallels:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
         return info.Parallels(
@@ -98,6 +93,7 @@ async def get_parallels(
 async def get_teacher_by_levenshtein(
     school_id: ID,
     name: Annotated[str, Field(max_length=200, min_length=1)],
+    _=Depends(get_current_user),
 ) -> info.Teachers:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
@@ -130,7 +126,9 @@ async def get_teacher_by_levenshtein(
     response_model=info.Letters,
 )
 async def get_letters(
-    school_id: ID, educational_level: Annotated[int, Field(ge=0, le=12)]
+    school_id: ID,
+    educational_level: Annotated[int, Field(ge=0, le=12)],
+    _=Depends(get_current_user),
 ) -> info.Letters:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
@@ -152,6 +150,7 @@ async def get_groups(
     school_id: ID,
     educational_level: Annotated[int, Field(ge=0, le=12)],
     identificator: Annotated[str, Field(max_length=50)],
+    _=Depends(get_current_user),
 ) -> info.Groups:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
@@ -173,7 +172,7 @@ async def get_groups(
     tags=[INFO, SCHOOL, WEBSITE, TELEGRAM],
     response_model=info.Schools,
 )
-async def get_school() -> info.Schools:
+async def get_school(_=Depends(get_current_user)) -> info.Schools:
     with get_session() as session:
         schools = session.query(database.School).all()
         return info.Schools(
@@ -186,9 +185,7 @@ async def get_school() -> info.Schools:
     tags=[INFO, CORPUS, WEBSITE, TELEGRAM],
     response_model=info.Corpuses,
 )
-async def get_corpuses(
-    school_id: ID,
-) -> info.Corpuses:
+async def get_corpuses(school_id: ID, _=Depends(get_current_user)) -> info.Corpuses:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
         return info.Corpuses(
@@ -206,6 +203,7 @@ async def get_corpuses(
 )
 async def get_schools_by_levenshtein(
     name: Annotated[str, Field(max_length=200, min_length=1)],
+    _=Depends(get_current_user),
 ) -> info.Schools:
     with get_session() as session:
         schools = (
@@ -222,7 +220,7 @@ async def get_schools_by_levenshtein(
 @router.get(
     "/cabinets/all", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
 )
-async def get_cabinets(school_id: ID) -> info.Cabinets:
+async def get_cabinets(school_id: ID, _=Depends(get_current_user)) -> info.Cabinets:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
         return info.Cabinets(
@@ -243,7 +241,7 @@ async def get_cabinets(school_id: ID) -> info.Cabinets:
 
 
 @router.get("/lessons/all", tags=[INFO, LESSON, TELEGRAM], response_model=info.Lessons)
-async def get_lessons(school_id: ID) -> info.Lessons:
+async def get_lessons(school_id: ID, _=Depends(get_current_user)) -> info.Lessons:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
         return info.Lessons(
@@ -297,7 +295,9 @@ async def get_lessons(school_id: ID) -> info.Lessons:
     tags=[INFO, LESSON_NUMBER, TELEGRAM],
     response_model=info.LessonNumbers,
 )
-async def get_all_timetables(school_id: ID) -> info.LessonNumbers:
+async def get_all_timetables(
+    school_id: ID, _=Depends(get_current_user)
+) -> info.LessonNumbers:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
         timetables = (
@@ -324,6 +324,7 @@ async def get_free_cabinet(
     day_of_week: Annotated[int, Field(ge=1, le=7)],
     lesson_number: Optional[Annotated[int, Field(ge=0, le=20)]] = None,
     floor: Optional[Annotated[int, Field(ge=-10, le=100)]] = None,
+    _=Depends(get_current_user),
 ) -> info.Cabinets:
     with get_session() as session:
         corpus = db_validated.get_corpus_by_id(session, corpus_id)
@@ -372,7 +373,7 @@ async def get_free_cabinet(
 
 
 @router.get("/corpus/canteen", tags=[CORPUS, TELEGRAM], response_model=info.Canteen)
-async def get_canteen_text(corpus_id: ID) -> info.Canteen:
+async def get_canteen_text(corpus_id: ID, _=Depends(get_current_user)) -> info.Canteen:
     with get_session() as session:
         corpus = db_validated.get_corpus_by_id(session, corpus_id)
 
@@ -390,6 +391,7 @@ async def get_subclass_by_params(
     educational_level: Annotated[int, Field(ge=0, le=12)],
     identificator: Annotated[str, Field(max_length=50)],
     additional_identificator: Annotated[str, Field(max_length=50)],
+    _=Depends(get_current_user),
 ) -> item.Subclass:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, school_id)
@@ -409,7 +411,7 @@ async def get_subclass_by_params(
 
 
 @router.get("/check/telegramid", tags=[TELEGRAM], response_model=item.Result)
-async def check_existence(telegram_id: TID) -> item.Result:
+async def check_existence(telegram_id: TID, _=Depends(get_current_user)) -> item.Result:
     with get_session() as session:
         account = (
             session.query(database.Account).filter_by(telegram_id=telegram_id).first()
@@ -420,6 +422,6 @@ async def check_existence(telegram_id: TID) -> item.Result:
 
 
 @router.get("/telegramid/all", tags=[TELEGRAM], response_model=List[int])
-async def get_all_users() -> List[int]:
+async def get_all_users(_=Depends(get_current_user)) -> List[int]:
     with get_session() as session:
         return [acc.telegram_id for acc in session.query(database.Account).all()]

@@ -4,6 +4,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from extra.auth import get_current_user
 
 import valid_db_requests as db_validated
 from config import API_LESSON_NUMBER_PREFIX, API_PREFIX
@@ -25,7 +26,7 @@ logger.info(f"Lesson_number router created on {API_PREFIX+API_LESSON_NUMBER_PREF
     "/new", tags=[LESSON_NUMBER, WEBSITE], response_model=outgoing.LessonNumber
 )
 async def create_new_lesson_number(
-    lesson_number: incoming.LessonNumber,
+    lesson_number: incoming.LessonNumber, _=Depends(get_current_user)
 ) -> outgoing.LessonNumber:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, lesson_number.school_id)
@@ -78,7 +79,7 @@ async def create_new_lesson_number(
 @router.put(
     "/update", tags=[LESSON_NUMBER, WEBSITE], response_model=outgoing.LessonNumber
 )
-async def update_timetable(request: updating.LessonNumber):
+async def update_timetable(request: updating.LessonNumber, _=Depends(get_current_user)):
     with get_session() as session:
         lesson_number = db_validated.get_lesson_number_by_id(
             session, request.lesson_number_id

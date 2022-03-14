@@ -2,6 +2,7 @@
 
 
 from fastapi import APIRouter, Depends, HTTPException
+from extra.auth import get_current_user
 
 import valid_db_requests as db_validated
 from config import API_CORPUS_PREFIX, API_PREFIX
@@ -20,7 +21,9 @@ logger.info(f"Corpus router created on {API_PREFIX+API_CORPUS_PREFIX}")
 
 
 @router.post("/new", tags=[CORPUS, WEBSITE], response_model=outgoing.Corpus)
-async def create_new_corpus(corpus: incoming.Corpus) -> outgoing.Corpus:
+async def create_new_corpus(
+    corpus: incoming.Corpus, _=Depends(get_current_user)
+) -> outgoing.Corpus:
     with get_session() as session:
         school = db_validated.get_school_by_id(session, corpus.school_id)
         logger.debug(
@@ -67,7 +70,7 @@ async def create_new_corpus(corpus: incoming.Corpus) -> outgoing.Corpus:
 
 
 @router.put("/update", tags=[CORPUS, WEBSITE], response_model=outgoing.Corpus)
-async def update_corpus(request: updating.Corpus):
+async def update_corpus(request: updating.Corpus, _=Depends(get_current_user)):
     with get_session() as session:
         corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
 

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from collections import defaultdict
+from extra.auth import get_current_user
 import valid_db_requests as db_validated
 from config import API_PREFIX, API_STATISTICS_PREFIX
 from config import DEFAULT_LOGGER as logger
@@ -23,7 +24,7 @@ class Count(BaseModel):
 
 
 @router.get("/teachers", tags=[STATS], response_model=Count)
-async def get_teachers_count() -> Count:
+async def get_teachers_count(_=Depends(get_current_user)) -> Count:
     with get_session() as session:
         teachers = (
             session.query(database.Role)
@@ -34,7 +35,7 @@ async def get_teachers_count() -> Count:
 
 
 @router.get("/parents", tags=[STATS], response_model=Count)
-async def get_parents_count() -> Count:
+async def get_parents_count(_=Depends(get_current_user)) -> Count:
     with get_session() as session:
         parents = (
             session.query(database.Role)
@@ -45,7 +46,7 @@ async def get_parents_count() -> Count:
 
 
 @router.get("/students", tags=[STATS], response_model=Count)
-async def get_students_count() -> Count:
+async def get_students_count(_=Depends(get_current_user)) -> Count:
     with get_session() as session:
         students = (
             session.query(database.Role)
@@ -57,7 +58,7 @@ async def get_students_count() -> Count:
 
 
 @router.get("/administrations", tags=[STATS], response_model=Count)
-async def get_administrations_count() -> Count:
+async def get_administrations_count(_=Depends(get_current_user)) -> Count:
     with get_session() as session:
         administrations = (
             session.query(database.Role)
@@ -68,7 +69,7 @@ async def get_administrations_count() -> Count:
 
 
 @router.get("/parallel", tags=[STATS], response_model=outgoing.Statistics)
-async def get_parallel_count():
+async def get_parallel_count(_=Depends(get_current_user)):
     with get_session() as session:
         students = (
             session.query(database.Role)
@@ -85,7 +86,7 @@ async def get_parallel_count():
 
 
 @router.get("/children", tags=[STATS], response_model=outgoing.Statistics)
-async def get_children_count():
+async def get_children_count(_=Depends(get_current_user)):
     with get_session() as session:
         parents = (
             session.query(database.Role)
@@ -105,7 +106,7 @@ async def get_children_count():
 
 
 @router.get("/teacherparallel", tags=[STATS], response_model=outgoing.Statistics)
-async def get_teacher_parallel():
+async def get_teacher_parallel(_=Depends(get_current_user)):
     with get_session() as session:
         teachers = (
             session.query(database.Role)

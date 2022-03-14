@@ -1,6 +1,7 @@
 # pyright: reportUnknownMemberType=false
 
 from fastapi import APIRouter, Depends
+from extra.auth import get_current_user
 from api_types import ID
 import valid_db_requests as db_validated
 from config import API_ID_GETTER_PREFIX, API_PREFIX
@@ -27,7 +28,7 @@ logger.info(f"int getter router created on {API_PREFIX+API_ID_GETTER_PREFIX}")
 
 
 @router.get("/subclass/{id}", tags=[SUBCLASS, INFO], response_model=item.Subclass)
-async def get_subclass(id: ID):
+async def get_subclass(id: ID, _=Depends(get_current_user)):
     with get_session() as session:
         subclass = db_validated.get_subclass_by_id(session, id)
 
@@ -40,7 +41,7 @@ async def get_subclass(id: ID):
 
 
 @router.get("/teacher/{id}", tags=[TEACHER, INFO], response_model=item.Teacher)
-async def get_teacher(id: ID):
+async def get_teacher(id: ID, _=Depends(get_current_user)):
     with get_session() as session:
         teacher = db_validated.get_teacher_by_id(session, id)
 
@@ -51,7 +52,7 @@ async def get_teacher(id: ID):
 
 
 @router.get("/school/{id}", tags=[SCHOOL, INFO], response_model=item.School)
-async def get_school(id: ID):
+async def get_school(id: ID, _=Depends(get_current_user)):
     with get_session() as session:
         school = db_validated.get_school_by_id(session, id)
 
@@ -62,7 +63,7 @@ async def get_school(id: ID):
 
 
 @router.get("/corpus/{id}", tags=[CORPUS, INFO], response_model=item.Corpus)
-async def get_corpus(id: ID):
+async def get_corpus(id: ID, _=Depends(get_current_user)):
     with get_session() as session:
         corpus = db_validated.get_corpus_by_id(session, id)
 
@@ -74,7 +75,7 @@ async def get_corpus(id: ID):
 
 
 @router.get("/lesson/{id}", tags=[LESSON, INFO], response_model=item.Lesson)
-async def get_lesson(id: ID):
+async def get_lesson(id: ID, _=Depends(get_current_user)):
     with get_session() as session:
         lesson = db_validated.get_lesson_by_id(session, id)
 
@@ -119,7 +120,7 @@ async def get_lesson(id: ID):
 
 
 @router.get("/cabinet/{id}", tags=[CABINET, INFO], response_model=item.Cabinet)
-async def get_cabinet(id: ID):
+async def get_cabinet(id: ID, _=Depends(get_current_user)):
     with get_session() as session:
         cabinet = db_validated.get_cabinet_by_id(session, id)
 
@@ -140,7 +141,7 @@ async def get_cabinet(id: ID):
     tags=[LESSON_NUMBER, INFO],
     response_model=item.LessonNumber,
 )
-async def get_lesson_number(id: ID):
+async def get_lesson_number(id: ID, _=Depends(get_current_user)):
     with get_session() as session:
         lesson_number = db_validated.get_lesson_number_by_id(session, id)
 

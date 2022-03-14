@@ -2,6 +2,7 @@
 
 
 from fastapi import APIRouter, Depends, HTTPException
+from extra.auth import get_current_user
 from api_types import ID
 import valid_db_requests as db_validated
 from config import API_LESSON_PREFIX, API_PREFIX
@@ -20,7 +21,9 @@ logger.info(f"Lesson router created on {API_PREFIX+API_LESSON_PREFIX}")
 
 
 @router.post("/new", tags=[LESSON, WEBSITE], response_model=outgoing.Lesson)
-async def create_new_lesson(lesson: incoming.Lesson) -> outgoing.Lesson:
+async def create_new_lesson(
+    lesson: incoming.Lesson, _=Depends(get_current_user)
+) -> outgoing.Lesson:
     with get_session() as session:
         cabinet = db_validated.get_cabinet_by_id(session, lesson.cabinet_id)
         corpus = db_validated.get_corpus_by_id(session, cabinet.corpus_id)
@@ -71,7 +74,7 @@ async def create_new_lesson(lesson: incoming.Lesson) -> outgoing.Lesson:
 
 
 @router.put("/update", tags=[LESSON, WEBSITE], response_model=outgoing.Lesson)
-async def update_lesson(request: updating.Lesson):
+async def update_lesson(request: updating.Lesson, _=Depends(get_current_user)):
     with get_session() as session:
         lesson = db_validated.get_lesson_by_id(session, request.lesson_id)
 
@@ -137,7 +140,7 @@ async def update_lesson(request: updating.Lesson):
 
 
 @router.delete("/delete", tags=[LESSON, WEBSITE], response_model=outgoing.Lesson)
-async def delete_lesson(lesson_id: ID):
+async def delete_lesson(lesson_id: ID, _=Depends(get_current_user)):
     with get_session() as session:
         lesson = db_validated.get_lesson_by_id(session, lesson_id)
         session.delete(lesson)

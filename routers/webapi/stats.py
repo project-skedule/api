@@ -23,6 +23,13 @@ class Count(BaseModel):
     count: int
 
 
+@router.get("/users", tags=[STATS], response_model=Count)
+async def get_user_count() -> Count:
+    with get_session() as session:
+        users = session.query(database.Account).all()
+        return Count(count=len(users))
+
+
 @router.get("/teachers", tags=[STATS], response_model=Count)
 async def get_teachers_count(_=Depends(get_current_user)) -> Count:
     with get_session() as session:
@@ -80,12 +87,10 @@ async def get_parallel_count(_=Depends(get_current_user)):
         for student in students:
             data[student.student.subclass.educational_level] += 1
 
-        return outgoing.Statistics(
-            data=[outgoing.Stat(number=ed, occurrences=num) for ed, num in data.items()]
-        )
+        return outgoing.Statistics(data=dict(data))
 
 
-@router.get("/children", tags=[STATS], response_model=outgoing.Statistics)
+@router.get("/childrencount", tags=[STATS], response_model=outgoing.Statistics)
 async def get_children_count(_=Depends(get_current_user)):
     with get_session() as session:
         parents = (
@@ -97,12 +102,7 @@ async def get_children_count(_=Depends(get_current_user)):
         for parent in parents:
             data[len(parent.parent.children)] += 1
 
-        return outgoing.Statistics(
-            data=[
-                outgoing.Stat(number=children, occurrences=cnt)
-                for children, cnt in data.items()
-            ]
-        )
+        return outgoing.Statistics(data=dict(data))
 
 
 @router.get("/teacherparallel", tags=[STATS], response_model=outgoing.Statistics)
@@ -132,9 +132,35 @@ async def get_teacher_parallel(_=Depends(get_current_user)):
             for subclass in subclasses:
                 data[subclass] += 1
 
-        return outgoing.Statistics(
-            data=[
-                outgoing.Stat(number=parallel, occurrences=cnt)
-                for parallel, cnt in data.items()
-            ]
+        return outgoing.Statistics(data=dict(data))
+
+
+@router.get("/parentchildren", tags=[STATS], response_model=outgoing.Statistics)
+async def get_children_for_parents():
+    with get_session() as session:
+        parents = (
+            session.query(database.Role)
+            .filter_by(role_type=database.RoleEnum.PARENT)
+            .all()
         )
+
+        data = defaultdict(lambda: 0)
+
+        for parent in parents:
+            for child in parent.parent.children:
+                data[child.subclass.educational_level] += 1
+
+        return outgoing.Statistics(data=dict(data))
+
+
+@router.get("/parentswithchildren", tags=[STATS], response_model=Count)
+async def get_parent_with_children():
+    with get_session() as session:
+        parents = (
+            session.query(database.Role)
+            .filter_by(role_type=database.RoleEnum.PARENT)
+            .all()
+        )
+        parents = list(filter(lambda x: len(x.parent.children) >= 1, parents))
+
+        return Count(count=len(parents))

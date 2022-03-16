@@ -9,4 +9,3 @@ from models.web.outgoing.subclass import Subclass
 from models.web.outgoing.teacher import Teacher
 from models.web.outgoing.preview import AnnouncementsPreview
 from models.web.outgoing.stats import Statistics
-from models.web.outgoing.stats import Stat

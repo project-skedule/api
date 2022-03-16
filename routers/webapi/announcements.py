@@ -28,37 +28,38 @@ router = APIRouter(
     response_model=outgoing.AnnouncementsPreview,
 )
 async def post_new_announcement(
-    request: incoming.Announcement, _=Depends(get_current_user)
+    request: incoming.Announcement,
+    _=Depends(get_current_user),
+    session=Depends(get_session),
 ):
-    with get_session() as session:
-        teachers, subclasses, telegram_ids = announcement_preview(request, session)
+    teachers, subclasses, telegram_ids = announcement_preview(request, session)
 
-        async with aiohttp.ClientSession() as http_session:
-            async with http_session.post(
-                f"http://{TRANSMITTER_HOST}:{TRANSMITTER_PORT}/api/trans/redirect/telegram",
-                json={"text": request.text, "telegram_ids": list(telegram_ids)},
-            ) as response:
-                if response.status != 200:
-                    logger.error(
-                        f"Can not post announcement to {TRANSMITTER_HOST}:{TRANSMITTER_PORT}. More: {await response.text()}"
-                    )
-                    raise HTTPException(
-                        status_code=500, detail="Can not post your announcement"
-                    )
-
-        return outgoing.AnnouncementsPreview(
-            teachers=[teacher.name for teacher in teachers],
-            subclasses=[
-                outgoing.preview.Subclass(
-                    educational_level=s.educational_level,
-                    identificator=s.identificator,
-                    additional_identificator=s.additional_identificator,
+    async with aiohttp.ClientSession() as http_session:
+        async with http_session.post(
+            f"http://{TRANSMITTER_HOST}:{TRANSMITTER_PORT}/api/trans/redirect/telegram",
+            json={"text": request.text, "telegram_ids": list(telegram_ids)},
+        ) as response:
+            if response.status != 200:
+                logger.error(
+                    f"Can not post announcement to {TRANSMITTER_HOST}:{TRANSMITTER_PORT}. More: {await response.text()}"
                 )
-                for s in subclasses
-            ],
-            sent_to_parents=request.resend_to_parents,
-            sent_only_to_parents=request.sent_only_to_parents,
-        )
+                raise HTTPException(
+                    status_code=500, detail="Can not post your announcement"
+                )
+
+    return outgoing.AnnouncementsPreview(
+        teachers=[teacher.name for teacher in teachers],
+        subclasses=[
+            outgoing.preview.Subclass(
+                educational_level=s.educational_level,
+                identificator=s.identificator,
+                additional_identificator=s.additional_identificator,
+            )
+            for s in subclasses
+        ],
+        sent_to_parents=request.resend_to_parents,
+        sent_only_to_parents=request.sent_only_to_parents,
+    )
 
 
 @router.post(
@@ -67,24 +68,25 @@ async def post_new_announcement(
     response_model=outgoing.AnnouncementsPreview,
 )
 async def post_new_announcement(
-    request: incoming.Announcement, _=Depends(get_current_user)
+    request: incoming.Announcement,
+    _=Depends(get_current_user),
+    session=Depends(get_session),
 ):
-    with get_session() as session:
-        teachers, subclasses, telegram_ids = announcement_preview(request, session)
+    teachers, subclasses, telegram_ids = announcement_preview(request, session)
 
-        return outgoing.AnnouncementsPreview(
-            teachers=[teacher.name for teacher in teachers],
-            subclasses=[
-                outgoing.preview.Subclass(
-                    educational_level=s.educational_level,
-                    identificator=s.identificator,
-                    additional_identificator=s.additional_identificator,
-                )
-                for s in subclasses
-            ],
-            sent_to_parents=request.resend_to_parents,
-            sent_only_to_parents=request.sent_only_to_parents,
-        )
+    return outgoing.AnnouncementsPreview(
+        teachers=[teacher.name for teacher in teachers],
+        subclasses=[
+            outgoing.preview.Subclass(
+                educational_level=s.educational_level,
+                identificator=s.identificator,
+                additional_identificator=s.additional_identificator,
+            )
+            for s in subclasses
+        ],
+        sent_to_parents=request.resend_to_parents,
+        sent_only_to_parents=request.sent_only_to_parents,
+    )
 
 
 def announcement_preview(request, session):
@@ -228,21 +230,22 @@ class SimpleAnnouncement(BaseModel):
     tags=[ANNOUNCEMENTS, WEBSITE],
     response_model=List[int],
 )
-async def send_to_all(request: SimpleAnnouncement, _=Depends(get_current_user)):
-    with get_session() as session:
-        telegram_ids = [
-            acc.telegram_id for acc in session.query(database.Account).all()
-        ]
-        async with aiohttp.ClientSession() as http_session:
-            async with http_session.post(
-                f"http://{TRANSMITTER_HOST}:{TRANSMITTER_PORT}/api/trans/redirect/telegram",
-                json={"text": request.text, "telegram_ids": list(telegram_ids)},
-            ) as response:
-                if response.status != 200:
-                    logger.error(
-                        f"Can not post announcement to {TRANSMITTER_HOST}:{TRANSMITTER_PORT}. More: {await response.text()}"
-                    )
-                    raise HTTPException(
-                        status_code=500, detail="Can not post your announcement"
-                    )
-        return telegram_ids
+async def send_to_all(
+    request: SimpleAnnouncement,
+    _=Depends(get_current_user),
+    session=Depends(get_session),
+):
+    telegram_ids = [acc.telegram_id for acc in session.query(database.Account).all()]
+    async with aiohttp.ClientSession() as http_session:
+        async with http_session.post(
+            f"http://{TRANSMITTER_HOST}:{TRANSMITTER_PORT}/api/trans/redirect/telegram",
+            json={"text": request.text, "telegram_ids": list(telegram_ids)},
+        ) as response:
+            if response.status != 200:
+                logger.error(
+                    f"Can not post announcement to {TRANSMITTER_HOST}:{TRANSMITTER_PORT}. More: {await response.text()}"
+                )
+                raise HTTPException(
+                    status_code=500, detail="Can not post your announcement"
+                )
+    return telegram_ids

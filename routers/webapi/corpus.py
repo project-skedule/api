@@ -22,94 +22,94 @@ logger.info(f"Corpus router created on {API_PREFIX+API_CORPUS_PREFIX}")
 
 @router.post("/new", tags=[CORPUS, WEBSITE], response_model=outgoing.Corpus)
 async def create_new_corpus(
-    corpus: incoming.Corpus, _=Depends(get_current_user)
+    corpus: incoming.Corpus, _=Depends(get_current_user), session=Depends(get_session)
 ) -> outgoing.Corpus:
-    with get_session() as session:
-        school = db_validated.get_school_by_id(session, corpus.school_id)
+    school = db_validated.get_school_by_id(session, corpus.school_id)
+    logger.debug(
+        f"Searching corpus with name {corpus.name} and school_id {corpus.school_id}"
+    )
+    check_unique = (
+        session.query(database.Corpus)
+        .filter_by(name=corpus.name, school_id=corpus.school_id)
+        .all()
+    )
+    if check_unique:
         logger.debug(
-            f"Searching corpus with name {corpus.name} and school_id {corpus.school_id}"
+            f"Raised an exception because the corpus with name {corpus.name} is already exists in school with id {corpus.school_id}"
         )
-        check_unique = (
-            session.query(database.Corpus)
-            .filter_by(name=corpus.name, school_id=corpus.school_id)
-            .all()
+        raise HTTPException(
+            status_code=409,
+            detail=f"Corpus with name {corpus.name} is already exists",
         )
-        if check_unique:
-            logger.debug(
-                f"Raised an exception because the corpus with name {corpus.name} is already exists in school with id {corpus.school_id}"
-            )
-            raise HTTPException(
-                status_code=409,
-                detail=f"Corpus with name {corpus.name} is already exists",
-            )
-        check_unique = (
-            session.query(database.Corpus)
-            .filter_by(address=corpus.address, school_id=corpus.school_id)
-            .all()
+    check_unique = (
+        session.query(database.Corpus)
+        .filter_by(address=corpus.address, school_id=corpus.school_id)
+        .all()
+    )
+    if check_unique:
+        logger.debug(
+            f"Raised an exception because the corpus with address {corpus.address} is already exists in school with id {corpus.school_id}"
         )
-        if check_unique:
-            logger.debug(
-                f"Raised an exception because the corpus with address {corpus.address} is already exists in school with id {corpus.school_id}"
-            )
-            raise HTTPException(
-                status_code=409,
-                detail=f"Corpus with address {corpus.address} is already exists",
-            )
-        corpus = database.Corpus(
-            name=corpus.name, address=corpus.address, canteen_text=corpus.canteen_text
+        raise HTTPException(
+            status_code=409,
+            detail=f"Corpus with address {corpus.address} is already exists",
         )
-        logger.info(
-            f"Adding corpus with name {corpus.name} and address {corpus.address} to school with name {school.name}"
-        )
-        school.corpuses.append(corpus)
-        session.add(corpus)
-        session.add(school)
-        session.commit()
-        logger.debug(f"Corpus acquired id {corpus.id}")
-        return outgoing.Corpus(id=corpus.id)
+    corpus = database.Corpus(
+        name=corpus.name, address=corpus.address, canteen_text=corpus.canteen_text
+    )
+    logger.info(
+        f"Adding corpus with name {corpus.name} and address {corpus.address} to school with name {school.name}"
+    )
+    school.corpuses.append(corpus)
+    session.add(corpus)
+    session.add(school)
+    session.commit()
+    logger.debug(f"Corpus acquired id {corpus.id}")
+    return outgoing.Corpus(id=corpus.id)
 
 
 @router.put("/update", tags=[CORPUS, WEBSITE], response_model=outgoing.Corpus)
-async def update_corpus(request: updating.Corpus, _=Depends(get_current_user)):
-    with get_session() as session:
-        corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
+async def update_corpus(
+    request: updating.Corpus, _=Depends(get_current_user), session=Depends(get_session)
+):
+    corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
 
-        if request.address is not None:
-            check_unique = (
-                session.query(database.Corpus)
-                .filter_by(address=request.address, school_id=corpus.school_id)
-                .first()
+    if request.address is not None:
+        check_unique = (
+            session.query(database.Corpus)
+            .filter_by(address=request.address, school_id=corpus.school_id)
+            .first()
+        )
+        if check_unique is not None:
+            logger.debug(
+                f"Raised an exception because the corpus with address {request.address} is already exists in school with id {corpus.school_id}"
             )
-            if check_unique is not None:
-                logger.debug(
-                    f"Raised an exception because the corpus with address {request.address} is already exists in school with id {corpus.school_id}"
-                )
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Corpus with address {request.address} is already exists",
-                )
-            corpus.address = request.address
-
-        if request.name is not None:
-            check_unique = (
-                session.query(database.Corpus)
-                .filter_by(name=request.name, school_id=corpus.school_id)
-                .first()
+            raise HTTPException(
+                status_code=409,
+                detail=f"Corpus with address {request.address} is already exists",
             )
-            if check_unique is not None:
-                logger.debug(
-                    f"Raised an exception because the corpus with name {request.name} is already exists in school with id {corpus.school_id}"
-                )
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Corpus with name {request.name} is already exists",
-                )
-            corpus.name = request.name
+        corpus.address = request.address
 
-        if request.canteen_text is not None:
-            corpus.canteen_text = request.canteen_text
+    if request.name is not None:
+        check_unique = (
+            session.query(database.Corpus)
+            .filter_by(name=request.name, school_id=corpus.school_id)
+            .first()
+        )
+        if check_unique is not None:
+            logger.debug(
+                f"Raised an exception because the corpus with name {request.name} is already exists in school with id {corpus.school_id}"
+            )
+            raise HTTPException(
+                status_code=409,
+                detail=f"Corpus with name {request.name} is already exists",
+            )
+        corpus.name = request.name
 
-        session.add(corpus)
-        session.commit()
+    if request.canteen_text is not None:
+        corpus.canteen_text = request.canteen_text
 
-        return outgoing.Corpus(id=corpus.id)
+    session.add(corpus)
+    session.commit()
+
+    return outgoing.Corpus(id=corpus.id)

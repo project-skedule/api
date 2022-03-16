@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException
+from sqlalchemy.orm.session import Session
 from datetime import datetime, timedelta
 from config import (
     DEFAULT_LOGGER as logger,
@@ -30,13 +31,12 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-def get_user(username: str):
-    with get_session() as session:
-        return session.query(database.OAuthUsers).filter_by(name=username).first()
+def get_user(username: str, session: Session):
+    return session.query(database.OAuthUsers).filter_by(name=username).first()
 
 
-def authenticate_user(username: str, password: str):
-    user = get_user(username)
+def authenticate_user(username: str, password: str, session: Session):
+    user = get_user(username, session)
     if not user:
         return False
     if not verify_password(password, user.password):
@@ -52,7 +52,9 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(OAUTH2_SCHEME)):
+async def get_current_user(
+    token: str = Depends(OAUTH2_SCHEME), session=Depends(get_session)
+):
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -68,7 +70,7 @@ async def get_current_user(token: str = Depends(OAUTH2_SCHEME)):
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(token_data.username)
+    user = get_user(token_data.username, session)
     if user is None:
         raise credentials_exception
     return user

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from extra.auth import authenticate_user, create_access_token, get_current_user
-from config import DEFAULT_LOGGER as logger, API_TOKEN_URl
+from config import DEFAULT_LOGGER as logger, API_TOKEN_URl, get_session
 
 from fastapi.middleware.cors import CORSMiddleware
 from routers import routers
@@ -29,8 +29,10 @@ async def index_page():
 
 
 @app.post(API_TOKEN_URl)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(), session=Depends(get_session)
+):
+    user = authenticate_user(form_data.username, form_data.password, session)
     if not user:
         raise HTTPException(
             status_code=401,

@@ -79,7 +79,6 @@ SESSION_FACTORY: Callable[..., ContextManager[Session]] = scoped_session(
 )
 
 
-@contextmanager
 def get_session():
     session: Session = SESSION_FACTORY()
     try:

@@ -4,6 +4,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
+from extra.api_router import LoggingRouter
 from extra.auth import get_current_user
 from api_types.types import TID
 
@@ -25,6 +26,7 @@ from models.bot import item
 router = APIRouter(
     prefix=API_PREFIX + API_ROLE_MANAGEMENT_PREFIX,
     dependencies=[Depends(create_logger_dependency(logger))],
+    route_class=LoggingRouter,
 )
 logger.info(
     f"Role management router created on {API_PREFIX+API_ROLE_MANAGEMENT_PREFIX}"

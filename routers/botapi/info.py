@@ -5,6 +5,7 @@ from typing_extensions import Annotated
 from pydantic import Field
 import Levenshtein  # pyright: reportMissingTypeStubs=false
 from fastapi import APIRouter, Depends
+from extra.api_router import LoggingRouter
 from extra.auth import get_current_user
 from api_types import ID, TID
 import valid_db_requests as db_validated
@@ -30,6 +31,7 @@ from models.bot import incoming, info, item, telegram
 router = APIRouter(
     prefix=API_PREFIX + API_INFO_PREFIX,
     dependencies=[Depends(create_logger_dependency(logger))],
+    route_class=LoggingRouter,
 )
 logger.info(f"Info router created on {API_PREFIX+API_INFO_PREFIX}")
 

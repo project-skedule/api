@@ -4,6 +4,7 @@
 from typing import List
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
+from extra.api_router import LoggingRouter
 from extra.auth import get_current_user
 import valid_db_requests as db_validated
 from config import API_ANNOUNCEMENTS_PREFIX, API_PREFIX
@@ -19,6 +20,7 @@ from pydantic import BaseModel
 router = APIRouter(
     prefix=API_PREFIX + API_ANNOUNCEMENTS_PREFIX,
     dependencies=[Depends(create_logger_dependency(logger))],
+    route_class=LoggingRouter,
 )
 
 

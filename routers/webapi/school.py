@@ -2,6 +2,7 @@
 
 
 from fastapi import APIRouter, Depends, HTTPException
+from extra.api_router import LoggingRouter
 from extra.auth import get_current_user
 
 import valid_db_requests as db_validated
@@ -16,6 +17,7 @@ from models.web import incoming, outgoing, updating
 router = APIRouter(
     prefix=API_PREFIX + API_SCHOOL_PREFIX,
     dependencies=[Depends(create_logger_dependency(logger))],
+    route_class=LoggingRouter,
 )
 logger.info(f"School router created on {API_PREFIX+API_SCHOOL_PREFIX}")
 

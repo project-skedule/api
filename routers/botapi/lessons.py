@@ -6,6 +6,7 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import Field
+from extra.api_router import LoggingRouter
 from extra.auth import get_current_user
 from api_types.types import ID
 import valid_db_requests as db_validated
@@ -20,6 +21,7 @@ from models.bot import incoming, info, item
 router = APIRouter(
     prefix=API_PREFIX + API_LESSON_GETTER_PREFIX,
     dependencies=[Depends(create_logger_dependency(logger))],
+    route_class=LoggingRouter,
 )
 logger.info(f"Lesson Getter router created on {API_PREFIX+API_LESSON_GETTER_PREFIX}")
 

@@ -48,3 +48,4 @@ python-jose==3.3.0
 cryptography==36.0.1
 passlib==1.7.4
 bcrypt==3.2.0
+ujson==4.2.0

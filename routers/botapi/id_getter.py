@@ -1,6 +1,7 @@
 # pyright: reportUnknownMemberType=false
 
 from fastapi import APIRouter, Depends
+from extra.api_router import LoggingRouter
 from extra.auth import get_current_user
 from api_types import ID
 import valid_db_requests as db_validated
@@ -23,8 +24,9 @@ from models.bot import item
 router = APIRouter(
     prefix=API_PREFIX + API_ID_GETTER_PREFIX,
     dependencies=[Depends(create_logger_dependency(logger))],
+    route_class=LoggingRouter,
 )
-logger.info(f"int getter router created on {API_PREFIX+API_ID_GETTER_PREFIX}")
+logger.info(f"ID getter router created on {API_PREFIX+API_ID_GETTER_PREFIX}")
 
 
 @router.get("/subclass/{id}", tags=[SUBCLASS, INFO], response_model=item.Subclass)

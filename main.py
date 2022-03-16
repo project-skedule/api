@@ -1,7 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException
 from extra.api_router import LoggingRouter
 from extra.auth import authenticate_user, create_access_token, get_current_user
-from config import DEFAULT_LOGGER as logger, API_TOKEN_URl, get_session
+from config import (
+    DEFAULT_LOGGER as logger,
+    WEBSITE_HOST,
+    WEBSITE_PORT,
+    API_TOKEN_URl,
+    get_session,
+)
 
 from fastapi.middleware.cors import CORSMiddleware
 from routers import routers
@@ -14,7 +20,7 @@ logger.info("App created")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://dartt0n.xyz:8000"],
+    allow_origins=[f"http://{WEBSITE_HOST}:{WEBSITE_PORT}"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

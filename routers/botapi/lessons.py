@@ -7,7 +7,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import Field
 from extra.api_router import LoggingRouter
-from extra.auth import get_current_user
+from extra.service_auth import get_current_service
 from api_types.types import ID
 import valid_db_requests as db_validated
 from config import API_LESSON_GETTER_PREFIX, API_PREFIX
@@ -32,7 +32,7 @@ async def get_lesson_for_day(
     day_of_week: Annotated[int, Field(ge=1, le=7)],
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
-    _=Depends(get_current_user),
+    _=Depends(get_current_service),
     session=Depends(get_session),
 ) -> info.LessonsForDay:
     if teacher_id is not None and subclass_id is not None:
@@ -115,7 +115,7 @@ async def get_lesson_for_range(
     end_index: Annotated[int, Field(ge=1, le=7)],
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
-    _=Depends(get_current_user),
+    _=Depends(get_current_service),
     session=Depends(get_session),
 ) -> info.LessonsForRange:
     if teacher_id is not None and subclass_id is not None:
@@ -220,7 +220,7 @@ async def get_certain_lesson(
     day_of_week: Annotated[int, Field(ge=1, le=7)],
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
-    _=Depends(get_current_user),
+    _=Depends(get_current_service),
     session=Depends(get_session),
 ) -> item.Lesson:
     if teacher_id is not None and subclass_id is not None:

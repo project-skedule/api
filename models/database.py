@@ -244,9 +244,9 @@ class Announcement(Base):
 # ==================================================================================================
 
 
-class OAuthUsers(Base):
-    __tablename__ = "oauthusers"
+class Service(Base):
+    __tablename__ = "service"
     id = Column(Integer, **mod(0b1011))
     name = Column(String(length=50), **mod(0b0001))
-    password = Column(String(length=64), **mod(0b0000))
+    password = Column(String(length=60), **mod(0b0000))
     access_level = Column(Integer, **mod(0b0000))

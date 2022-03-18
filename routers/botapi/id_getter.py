@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends
 from extra.api_router import LoggingRouter
-from extra.auth import get_current_user
+from extra.service_auth import get_current_service
 from api_types import ID
 import valid_db_requests as db_validated
 from config import API_ID_GETTER_PREFIX, API_PREFIX
@@ -31,7 +31,7 @@ logger.info(f"ID getter router created on {API_PREFIX+API_ID_GETTER_PREFIX}")
 
 @router.get("/subclass/{id}", tags=[SUBCLASS, INFO], response_model=item.Subclass)
 async def get_subclass(
-    id: ID, _=Depends(get_current_user), session=Depends(get_session)
+    id: ID, _=Depends(get_current_service), session=Depends(get_session)
 ):
     subclass = db_validated.get_subclass_by_id(session, id)
 
@@ -45,7 +45,7 @@ async def get_subclass(
 
 @router.get("/teacher/{id}", tags=[TEACHER, INFO], response_model=item.Teacher)
 async def get_teacher(
-    id: ID, _=Depends(get_current_user), session=Depends(get_session)
+    id: ID, _=Depends(get_current_service), session=Depends(get_session)
 ):
     teacher = db_validated.get_teacher_by_id(session, id)
 
@@ -56,7 +56,9 @@ async def get_teacher(
 
 
 @router.get("/school/{id}", tags=[SCHOOL, INFO], response_model=item.School)
-async def get_school(id: ID, _=Depends(get_current_user), session=Depends(get_session)):
+async def get_school(
+    id: ID, _=Depends(get_current_service), session=Depends(get_session)
+):
     school = db_validated.get_school_by_id(session, id)
 
     return item.School(
@@ -66,7 +68,9 @@ async def get_school(id: ID, _=Depends(get_current_user), session=Depends(get_se
 
 
 @router.get("/corpus/{id}", tags=[CORPUS, INFO], response_model=item.Corpus)
-async def get_corpus(id: ID, _=Depends(get_current_user), session=Depends(get_session)):
+async def get_corpus(
+    id: ID, _=Depends(get_current_service), session=Depends(get_session)
+):
     corpus = db_validated.get_corpus_by_id(session, id)
 
     return item.Corpus(
@@ -77,7 +81,9 @@ async def get_corpus(id: ID, _=Depends(get_current_user), session=Depends(get_se
 
 
 @router.get("/lesson/{id}", tags=[LESSON, INFO], response_model=item.Lesson)
-async def get_lesson(id: ID, _=Depends(get_current_user), session=Depends(get_session)):
+async def get_lesson(
+    id: ID, _=Depends(get_current_service), session=Depends(get_session)
+):
     lesson = db_validated.get_lesson_by_id(session, id)
 
     return item.Lesson(
@@ -122,7 +128,7 @@ async def get_lesson(id: ID, _=Depends(get_current_user), session=Depends(get_se
 
 @router.get("/cabinet/{id}", tags=[CABINET, INFO], response_model=item.Cabinet)
 async def get_cabinet(
-    id: ID, _=Depends(get_current_user), session=Depends(get_session)
+    id: ID, _=Depends(get_current_service), session=Depends(get_session)
 ):
     cabinet = db_validated.get_cabinet_by_id(session, id)
 
@@ -144,7 +150,7 @@ async def get_cabinet(
     response_model=item.LessonNumber,
 )
 async def get_lesson_number(
-    id: ID, _=Depends(get_current_user), session=Depends(get_session)
+    id: ID, _=Depends(get_current_service), session=Depends(get_session)
 ):
     lesson_number = db_validated.get_lesson_number_by_id(session, id)
 

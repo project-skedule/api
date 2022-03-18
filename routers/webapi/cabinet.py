@@ -3,7 +3,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from extra.api_router import LoggingRouter
-from extra.auth import get_current_user
+from extra.service_auth import get_current_service
 
 import valid_db_requests as db_validated
 from config import API_CABINET_PREFIX, API_PREFIX
@@ -24,7 +24,9 @@ logger.info(f"Cabinet router created on {API_PREFIX+API_CABINET_PREFIX}")
 
 @router.post("/new", tags=[CABINET, WEBSITE], response_model=outgoing.Cabinet)
 async def create_new_cabinet(
-    cabinet: incoming.Cabinet, _=Depends(get_current_user), session=Depends(get_session)
+    cabinet: incoming.Cabinet,
+    _=Depends(get_current_service),
+    session=Depends(get_session),
 ) -> outgoing.Cabinet:
     corpus = db_validated.get_corpus_by_id(session, cabinet.corpus_id)
     school = db_validated.get_school_by_id(session, corpus.school_id)
@@ -60,7 +62,9 @@ async def create_new_cabinet(
 
 @router.put("/update", tags=[CABINET, WEBSITE], response_model=outgoing.Cabinet)
 async def update_cabinet(
-    request: updating.Cabinet, _=Depends(get_current_user), session=Depends(get_session)
+    request: updating.Cabinet,
+    _=Depends(get_current_service),
+    session=Depends(get_session),
 ):
     cabinet = db_validated.get_cabinet_by_id(session, request.cabinet_id)
 

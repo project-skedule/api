@@ -8,7 +8,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import sqlalchemy
 from extra.custom_logger import CustomizeLogger
-from fastapi.security import OAuth2PasswordBearer
 
 
 ROOT_DIR = Path(__file__).parent
@@ -31,9 +30,9 @@ API_ROLE_MANAGEMENT_PREFIX = "/rolemanagement"
 API_ID_GETTER_PREFIX = "/idgetter"
 API_ANNOUNCEMENTS_PREFIX = "/announcements"
 API_STATISTICS_PREFIX = "/stats"
-API_OAUTH_PREFIX = "/token"
 
-API_TOKEN_URl = API_PREFIX + API_OAUTH_PREFIX + "/auth"
+API_AUTH_PREFIX = "/auth"
+API_SERVICE_AUTH_PREFIX = "/service"
 
 MAX_LEVENSHTEIN_RESULTS = 5
 
@@ -55,10 +54,16 @@ DATABASE_CONNECTOR = "mariadbconnector"
 
 JWT_SECRET = config("JWT_SECRET")
 JWT_ALGORITHM = "HS256"
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+JWT_SERVICE_ACCESS_TOKEN_EXPIRE_MINUTES = 30
+JWT_SERVICE_REFRESH_TOKEN_EXPIRE_MINUTES = 15 * 24 * 60
+JWT_USER_ACCESS_TOKEN_EXPIRE_MINUTES = 30
+JWT_USER_REFRESH_TOKEN_EXPIRE_MINUTES = 15 * 24 * 60
+
 
 DEFAULT_LOGGER = CustomizeLogger.make_logger(LOGGER_CONFIG)
-OAUTH2_SCHEME = OAuth2PasswordBearer(tokenUrl=API_TOKEN_URl)
+
+
 BASIC_STATUS_MAX_CHILDREN = 1
 
 __connect_address__ = (
@@ -86,7 +91,7 @@ def get_session():
         for _ in range(10):
             try:
                 session.execute("SELECT 1")
-            except sqlalchemy.exc.InterfaceError as error:
+            except sqlalchemy.exc.InterfaceError as error:  # type: ignore
                 session: Session = SESSION_FACTORY()
                 continue
             else:

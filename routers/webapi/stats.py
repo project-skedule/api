@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from collections import defaultdict
 from extra.api_router import LoggingRouter
-from extra.service_auth import get_current_service
+from extra.auth_api import get_harvest_user
 import valid_db_requests as db_validated
 from config import API_PREFIX, API_STATISTICS_PREFIX
 from config import DEFAULT_LOGGER as logger
@@ -26,14 +26,16 @@ class Count(BaseModel):
 
 
 @router.get("/users", tags=[STATS], response_model=Count)
-async def get_user_count(session=Depends(get_session)) -> Count:
+async def get_user_count(
+    _=Depends(get_harvest_user), session=Depends(get_session)
+) -> Count:
     users = session.query(database.Account).all()
     return Count(count=len(users))
 
 
 @router.get("/teachers", tags=[STATS], response_model=Count)
 async def get_teachers_count(
-    _=Depends(get_current_service), session=Depends(get_session)
+    _=Depends(get_harvest_user), session=Depends(get_session)
 ) -> Count:
     teachers = (
         session.query(database.Role)
@@ -45,7 +47,7 @@ async def get_teachers_count(
 
 @router.get("/parents", tags=[STATS], response_model=Count)
 async def get_parents_count(
-    _=Depends(get_current_service), session=Depends(get_session)
+    _=Depends(get_harvest_user), session=Depends(get_session)
 ) -> Count:
     parents = (
         session.query(database.Role).filter_by(role_type=database.RoleEnum.PARENT).all()
@@ -55,7 +57,7 @@ async def get_parents_count(
 
 @router.get("/students", tags=[STATS], response_model=Count)
 async def get_students_count(
-    _=Depends(get_current_service), session=Depends(get_session)
+    _=Depends(get_harvest_user), session=Depends(get_session)
 ) -> Count:
     students = (
         session.query(database.Role)
@@ -68,7 +70,7 @@ async def get_students_count(
 
 @router.get("/administrations", tags=[STATS], response_model=Count)
 async def get_administrations_count(
-    _=Depends(get_current_service), session=Depends(get_session)
+    _=Depends(get_harvest_user), session=Depends(get_session)
 ) -> Count:
     administrations = (
         session.query(database.Role)
@@ -79,9 +81,7 @@ async def get_administrations_count(
 
 
 @router.get("/parallel", tags=[STATS], response_model=outgoing.Statistics)
-async def get_parallel_count(
-    _=Depends(get_current_service), session=Depends(get_session)
-):
+async def get_parallel_count(_=Depends(get_harvest_user), session=Depends(get_session)):
     students = (
         session.query(database.Role)
         .filter_by(role_type=database.RoleEnum.STUDENT)
@@ -95,9 +95,7 @@ async def get_parallel_count(
 
 
 @router.get("/childrencount", tags=[STATS], response_model=outgoing.Statistics)
-async def get_children_count(
-    _=Depends(get_current_service), session=Depends(get_session)
-):
+async def get_children_count(_=Depends(get_harvest_user), session=Depends(get_session)):
     parents = (
         session.query(database.Role).filter_by(role_type=database.RoleEnum.PARENT).all()
     )
@@ -110,7 +108,7 @@ async def get_children_count(
 
 @router.get("/teacherparallel", tags=[STATS], response_model=outgoing.Statistics)
 async def get_teacher_parallel(
-    _=Depends(get_current_service), session=Depends(get_session)
+    _=Depends(get_harvest_user), session=Depends(get_session)
 ):
     teachers = (
         session.query(database.Role)
@@ -140,7 +138,9 @@ async def get_teacher_parallel(
 
 
 @router.get("/parentchildren", tags=[STATS], response_model=outgoing.Statistics)
-async def get_children_for_parents(session=Depends(get_session)):
+async def get_children_for_parents(
+    _=Depends(get_harvest_user), session=Depends(get_session)
+):
     parents = (
         session.query(database.Role).filter_by(role_type=database.RoleEnum.PARENT).all()
     )
@@ -155,7 +155,9 @@ async def get_children_for_parents(session=Depends(get_session)):
 
 
 @router.get("/parentswithchildren", tags=[STATS], response_model=Count)
-async def get_parent_with_children(session=Depends(get_session)):
+async def get_parent_with_children(
+    _=Depends(get_harvest_user), session=Depends(get_session)
+):
     parents = (
         session.query(database.Role).filter_by(role_type=database.RoleEnum.PARENT).all()
     )

@@ -250,3 +250,21 @@ class Service(Base):
     name = Column(String(length=50), **mod(0b0001))
     password = Column(String(length=60), **mod(0b0000))
     access_level = Column(Integer, **mod(0b0000))
+
+
+# ==================================================================================================
+
+
+class HarvestUser(Base):
+    __tablename__ = "harvest_user"
+    uuid = Column(String(length=36), **mod(0b1001))
+    name = Column(String(length=30), **mod(0b0000))
+    surname = Column(String(length=50), **mod(0b0000))
+    email = Column(String(length=2000), **mod(0b0001))
+    password = Column(String(length=60), **mod(0b0000))
+    active_link = Column(String(length=300), **mod(0b0100))
+    access_token = Column(String(length=300), **mod(0b0000))
+    refresh_token = Column(String(length=300), **mod(0b0000))
+    logged_in = Column(Boolean, **mod(0b0000))
+    activated = Column(Boolean, **mod(0b0000))
+    image = Column(String(length=300), **mod(0b0000))

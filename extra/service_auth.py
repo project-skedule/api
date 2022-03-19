@@ -26,7 +26,9 @@ router = APIRouter(
 logger.info(f"Service auth router created on {API_PREFIX + API_SERVICE_AUTH_PREFIX}")
 
 OAUTH2_SERVICE_SCHEME = OAuth2PasswordBearer(
-    tokenUrl=API_PREFIX + API_SERVICE_AUTH_PREFIX + "/login"
+    tokenUrl=API_PREFIX + API_SERVICE_AUTH_PREFIX + "/login",
+    scheme_name="service_oauth",
+    # description="Login operation to get service access token",
 )
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

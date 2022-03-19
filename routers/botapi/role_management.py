@@ -126,7 +126,11 @@ async def get_by_id(
 
 
 @router.put("/add/parent", tags=[TELEGRAM, PARENT], response_model=outgoing.Account)
-def add_parent_role(request: incoming.Parent, session=Depends(get_session)):
+def add_parent_role(
+    request: incoming.Parent,
+    _=Depends(get_current_service),
+    session=Depends(get_session),
+):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
     if any(role.role_type == database.RoleEnum.PARENT for role in account.roles):
@@ -159,7 +163,11 @@ def add_parent_role(request: incoming.Parent, session=Depends(get_session)):
 
 
 @router.put("/add/student", tags=[TELEGRAM, STUDENT], response_model=outgoing.Account)
-def add_student_role(request: incoming.Student, session=Depends(get_session)):
+def add_student_role(
+    request: incoming.Student,
+    _=Depends(get_current_service),
+    session=Depends(get_session),
+):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
     if any(role.role_type == database.RoleEnum.STUDENT for role in account.roles):
@@ -194,7 +202,11 @@ def add_student_role(request: incoming.Student, session=Depends(get_session)):
 
 
 @router.put("/add/teacher", tags=[TELEGRAM, TEACHER], response_model=outgoing.Account)
-def add_teacher_role(request: incoming.Teacher, session=Depends(get_session)):
+def add_teacher_role(
+    request: incoming.Teacher,
+    _=Depends(get_current_service),
+    session=Depends(get_session),
+):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
     if any(role.role_type == database.RoleEnum.TEACHER for role in account.roles):
@@ -229,7 +241,9 @@ def add_teacher_role(request: incoming.Teacher, session=Depends(get_session)):
     response_model=outgoing.Account,
 )
 def add_administration_role(
-    request: incoming.Administration, session=Depends(get_session)
+    request: incoming.Administration,
+    _=Depends(get_current_service),
+    session=Depends(get_session),
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 

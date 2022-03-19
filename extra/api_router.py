@@ -1,8 +1,9 @@
 from time import time
+
+import ujson
+from config import DEFAULT_LOGGER as logger
 from fastapi import Request, Response
 from fastapi.routing import APIRoute
-from config import DEFAULT_LOGGER as logger
-import ujson
 
 
 class LoggingRouter(APIRoute):

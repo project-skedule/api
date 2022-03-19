@@ -1,11 +1,10 @@
 from typing import List
 
-from pydantic import BaseModel, Field
-
 from models.bot.item.cabinet import Cabinet
+from models.bot.item.lesson_number import LessonNumber
 from models.bot.item.subclass import Subclass
 from models.bot.item.teacher import Teacher
-from models.bot.item.lesson_number import LessonNumber
+from pydantic import BaseModel, Field
 
 
 class Lesson(BaseModel):

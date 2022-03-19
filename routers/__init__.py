@@ -1,9 +1,10 @@
 from typing import List
+
+from extra.auth_api import router as user_auth_router
+from extra.service_auth import router as service_auth_router
 from fastapi import APIRouter
 from routers.botapi import routers as bot_api_routers
 from routers.webapi import routers as web_api_routers
-from extra.auth_api import router as user_auth_router
-from extra.service_auth import router as service_auth_router
 
 routers: List[APIRouter] = [service_auth_router, user_auth_router]
 routers.extend(web_api_routers)

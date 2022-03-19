@@ -1,9 +1,8 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
-
 from models.bot.telegram.outgoing.role import Role
+from pydantic import BaseModel, Field
 
 
 class Account(BaseModel):

@@ -1,18 +1,16 @@
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
 from typing import List, Optional
-from typing_extensions import Annotated
-from pydantic import Field
+
 import Levenshtein  # pyright: reportMissingTypeStubs=false
-from fastapi import APIRouter, Depends
+import valid_db_requests as db_validated
+from api_types import ID, TID
+from config import API_INFO_PREFIX, API_PREFIX
+from config import DEFAULT_LOGGER as logger
+from config import MAX_LEVENSHTEIN_RESULTS, Access, get_session
+from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
-from api_types import ID, TID
-import valid_db_requests as db_validated
-from config import API_INFO_PREFIX, API_PREFIX, Access
-from config import DEFAULT_LOGGER as logger
-from config import MAX_LEVENSHTEIN_RESULTS, get_session
-from extra import create_logger_dependency
 from extra.tags import (
     CABINET,
     CORPUS,
@@ -25,8 +23,11 @@ from extra.tags import (
     TELEGRAM,
     WEBSITE,
 )
+from fastapi import APIRouter, Depends
 from models import database
 from models.bot import incoming, info, item, telegram
+from pydantic import Field
+from typing_extensions import Annotated
 
 info_allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Website)
 

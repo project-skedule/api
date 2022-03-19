@@ -1,9 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
-
 from models.bot.telegram.outgoing.parent_role import ParentRole
+from pydantic import BaseModel, Field
 
 
 class Parent(BaseModel):

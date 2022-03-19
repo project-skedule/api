@@ -1,14 +1,13 @@
 # pyright: reportUnknownMemberType=false
 
-from fastapi import APIRouter, Depends
+import valid_db_requests as db_validated
+from api_types import ID
+from config import API_ID_GETTER_PREFIX, API_PREFIX
+from config import DEFAULT_LOGGER as logger
+from config import Access, get_session
+from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
-from api_types import ID
-import valid_db_requests as db_validated
-from config import API_ID_GETTER_PREFIX, API_PREFIX, Access
-from config import DEFAULT_LOGGER as logger
-from config import get_session
-from extra import create_logger_dependency
 from extra.tags import (
     CABINET,
     CORPUS,
@@ -19,6 +18,7 @@ from extra.tags import (
     SUBCLASS,
     TEACHER,
 )
+from fastapi import APIRouter, Depends
 from models.bot import item
 
 id_getter_allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)

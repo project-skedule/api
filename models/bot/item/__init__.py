@@ -6,7 +6,7 @@ from models.bot.item.group import Group
 from models.bot.item.lesson import Lesson
 from models.bot.item.lesson_number import LessonNumber
 from models.bot.item.letter import Letter
+from models.bot.item.result import Result
 from models.bot.item.school import School
 from models.bot.item.subclass import Subclass
 from models.bot.item.teacher import Teacher
-from models.bot.item.result import Result

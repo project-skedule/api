@@ -1,11 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
+from models.bot.telegram.outgoing.administration_role import AdministrationRole
 from pydantic import BaseModel, Field
-
-from models.bot.telegram.outgoing.administration_role import (
-    AdministrationRole,
-)
 
 
 class Administration(BaseModel):

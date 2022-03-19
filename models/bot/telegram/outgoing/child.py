@@ -1,7 +1,6 @@
-from pydantic import BaseModel, Field
-
 from models.bot.item.school import School
 from models.bot.item.subclass import Subclass
+from pydantic import BaseModel, Field
 
 
 class Child(BaseModel):

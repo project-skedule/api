@@ -1,11 +1,10 @@
 # pyright: reportUnknownMemberType=false
 
-from fastapi import HTTPException
-from sqlalchemy.orm.session import Session
-
 from config import LOGGER_CONFIG
 from extra.custom_logger import CustomizeLogger
+from fastapi import HTTPException
 from models import database
+from sqlalchemy.orm.session import Session
 
 logger = CustomizeLogger.make_logger(LOGGER_CONFIG)
 

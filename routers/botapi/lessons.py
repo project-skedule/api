@@ -1,22 +1,22 @@
 from typing import Any, Dict, Optional, Union
+
+import valid_db_requests as db_validated
+from api_types.types import ID
+from config import API_LESSON_GETTER_PREFIX, API_PREFIX
+from config import DEFAULT_LOGGER as logger
+from config import Access, get_session
+from extra import create_logger_dependency
+from extra.api_router import LoggingRouter
+from extra.service_auth import AllowLevels, get_current_service
+from extra.tags import LESSON, TELEGRAM
+from fastapi import APIRouter, Depends, HTTPException
+from models import database
+from models.bot import incoming, info, item
+from pydantic import Field
 from typing_extensions import Annotated
 
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
-
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import Field
-from extra.api_router import LoggingRouter
-from extra.service_auth import AllowLevels, get_current_service
-from api_types.types import ID
-import valid_db_requests as db_validated
-from config import API_LESSON_GETTER_PREFIX, API_PREFIX, Access
-from config import DEFAULT_LOGGER as logger
-from config import get_session
-from extra import create_logger_dependency
-from extra.tags import LESSON, TELEGRAM
-from models import database
-from models.bot import incoming, info, item
 
 router = APIRouter(
     prefix=API_PREFIX + API_LESSON_GETTER_PREFIX,

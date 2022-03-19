@@ -1,10 +1,9 @@
-from fastapi import FastAPI
+from config import DEFAULT_LOGGER as logger
+from config import WEBSITE_HOST, WEBSITE_PORT
 from extra.api_router import LoggingRouter
-from config import DEFAULT_LOGGER as logger, WEBSITE_HOST, WEBSITE_PORT
-
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import routers
-
 
 app = FastAPI(
     title="Skedule API v2", debug=False, version="v2", router_class=LoggingRouter

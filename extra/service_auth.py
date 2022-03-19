@@ -1,28 +1,28 @@
-from typing import List
-from extra.api_router import LoggingRouter
-from extra import create_logger_dependency
-from models import database
-from pydantic import BaseModel
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, APIRouter
-from sqlalchemy.orm.session import Session
-from fastapi.security import (
-    OAuth2PasswordRequestForm,
-    OAuth2PasswordBearer,
-    SecurityScopes,
-)
 from datetime import datetime, timedelta
+from typing import List
+
+from config import API_PREFIX, API_SERVICE_AUTH_PREFIX
+from config import DEFAULT_LOGGER as logger
 from config import (
-    API_PREFIX,
-    DEFAULT_LOGGER as logger,
-    JWT_SERVICE_ACCESS_TOKEN_EXPIRE_MINUTES,
-    JWT_SECRET,
     JWT_ALGORITHM,
-    API_SERVICE_AUTH_PREFIX,
+    JWT_SECRET,
+    JWT_SERVICE_ACCESS_TOKEN_EXPIRE_MINUTES,
     Access,
     get_session,
 )
+from extra import create_logger_dependency
+from extra.api_router import LoggingRouter
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import (
+    OAuth2PasswordBearer,
+    OAuth2PasswordRequestForm,
+    SecurityScopes,
+)
+from jose import JWTError, jwt
+from models import database
+from passlib.context import CryptContext
+from pydantic import BaseModel
+from sqlalchemy.orm.session import Session
 
 # do not user logging middlewhere here
 router = APIRouter(

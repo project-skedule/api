@@ -1,7 +1,6 @@
-from pydantic import BaseModel
-
 from models.bot.telegram.outgoing.administration import Administration
 from models.database import RoleEnum
+from pydantic import BaseModel
 
 
 class AdministrationRole(BaseModel):

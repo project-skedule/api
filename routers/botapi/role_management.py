@@ -3,26 +3,20 @@
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+import valid_db_requests as db_validated
+from api_types.types import TID
+from config import API_PREFIX, API_ROLE_MANAGEMENT_PREFIX, BASIC_STATUS_MAX_CHILDREN
+from config import DEFAULT_LOGGER as logger
+from config import Access, get_session
+from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
-from api_types.types import TID
-
-import valid_db_requests as db_validated
-from config import (
-    API_PREFIX,
-    API_ROLE_MANAGEMENT_PREFIX,
-    BASIC_STATUS_MAX_CHILDREN,
-    Access,
-)
-from config import DEFAULT_LOGGER as logger
-from config import get_session
-from extra import create_logger_dependency
 from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER, TELEGRAM
+from fastapi import APIRouter, Depends, HTTPException
 from models import database
-from models.bot import item, incoming as bot_incoming
-from models.bot.telegram import incoming, outgoing
+from models.bot import incoming as bot_incoming
 from models.bot import item
+from models.bot.telegram import incoming, outgoing
 
 router = APIRouter(
     prefix=API_PREFIX + API_ROLE_MANAGEMENT_PREFIX,

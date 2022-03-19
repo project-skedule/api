@@ -1,8 +1,7 @@
 from typing import List
 
-from pydantic import BaseModel
-
 from models.bot.info.lessons_for_day import LessonsForDay
+from pydantic import BaseModel
 
 
 class LessonsForRange(BaseModel):

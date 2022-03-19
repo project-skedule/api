@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
 from models.bot.item.corpus import Corpus
+from pydantic import BaseModel, Field
 
 
 class Cabinet(BaseModel):

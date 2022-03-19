@@ -1,9 +1,7 @@
 from typing import List
 
-from pydantic import BaseModel, Field
-
-
 from models.bot.telegram.outgoing.child import Child
+from pydantic import BaseModel, Field
 
 
 class Parent(BaseModel):

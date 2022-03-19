@@ -1,24 +1,23 @@
-from extra import create_logger_dependency
-from pydantic import BaseModel, EmailStr
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, APIRouter, Body
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from datetime import datetime, timedelta
-from models import database
+from uuid import uuid4
+
+import ujson
+from config import API_AUTH_PREFIX, API_PREFIX
+from config import DEFAULT_LOGGER as logger
 from config import (
-    API_PREFIX,
-    DEFAULT_LOGGER as logger,
+    JWT_ALGORITHM,
+    JWT_SECRET,
     JWT_USER_ACCESS_TOKEN_EXPIRE_MINUTES,
     JWT_USER_REFRESH_TOKEN_EXPIRE_MINUTES,
-    JWT_SECRET,
-    JWT_ALGORITHM,
-    API_AUTH_PREFIX,
     get_session,
 )
-from uuid import uuid4
-import ujson
-
+from extra import create_logger_dependency
+from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
+from models import database
+from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr
 
 # do not user logging middlewhere here
 router = APIRouter(

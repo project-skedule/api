@@ -1,8 +1,7 @@
 from typing import List
 
-from pydantic import BaseModel
-
 from models.bot.item import Subclass
+from pydantic import BaseModel
 
 
 class Subclasses(BaseModel):

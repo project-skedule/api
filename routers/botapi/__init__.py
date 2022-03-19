@@ -1,6 +1,7 @@
 # pyright: reportUnusedImport=false
 
 from typing import List
+
 from fastapi import APIRouter
 from routers.botapi.id_getter import router as id_getter_router
 from routers.botapi.info import router as info_router

@@ -1,9 +1,8 @@
 from typing import Union
 
-from pydantic import BaseModel, Field
-
 from models.bot.incoming.subclass import Subclass
 from models.bot.incoming.teacher import Teacher
+from pydantic import BaseModel, Field
 
 
 class CertainLesson(BaseModel):

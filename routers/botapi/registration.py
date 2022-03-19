@@ -1,15 +1,15 @@
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
 
-from fastapi import APIRouter, Depends
+import valid_db_requests as db_validated
+from config import API_PREFIX, API_REGISTRATION_PREFIX
+from config import DEFAULT_LOGGER as logger
+from config import Access, get_session
+from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
-import valid_db_requests as db_validated
-from config import API_PREFIX, API_REGISTRATION_PREFIX, Access
-from config import DEFAULT_LOGGER as logger
-from config import get_session
-from extra import create_logger_dependency
 from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER, TELEGRAM
+from fastapi import APIRouter, Depends
 from models import database
 from models.bot import item
 from models.bot.telegram import incoming, outgoing

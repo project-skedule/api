@@ -3,13 +3,13 @@ from enum import Enum, auto
 from os import getenv as config
 from pathlib import Path
 from typing import Callable, ContextManager
-from sqlalchemy.orm.session import Session
+
+import sqlalchemy
+from extra.custom_logger import CustomizeLogger
 from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-import sqlalchemy
-from extra.custom_logger import CustomizeLogger
-
+from sqlalchemy.orm.session import Session
 
 ROOT_DIR = Path(__file__).parent
 LOGGER_CONFIG = ROOT_DIR / "logger_config.json"

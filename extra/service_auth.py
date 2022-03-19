@@ -105,10 +105,10 @@ def get_current_service(
 
 class AllowLevels:
     def __init__(self, *levels: Access):
-        self.levels = levels
+        self.levels = [level.value for level in levels]
 
-    def __call__(self, user=Depends(get_current_service)):
-        if user.access_level not in self.levels:
+    def __call__(self, service=Depends(get_current_service)):
+        if service.access_level not in self.levels:
             raise HTTPException(
                 status_code=401,
                 detail="Not allowed for this service",

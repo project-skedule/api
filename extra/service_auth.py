@@ -1,3 +1,4 @@
+from typing import List
 from extra.api_router import LoggingRouter
 from extra import create_logger_dependency
 from models import database
@@ -6,7 +7,11 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm.session import Session
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.security import (
+    OAuth2PasswordRequestForm,
+    OAuth2PasswordBearer,
+    SecurityScopes,
+)
 from datetime import datetime, timedelta
 from config import (
     API_PREFIX,
@@ -15,6 +20,7 @@ from config import (
     JWT_SECRET,
     JWT_ALGORITHM,
     API_SERVICE_AUTH_PREFIX,
+    Access,
     get_session,
 )
 
@@ -36,6 +42,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class TokenData(BaseModel):
     username: str
+    scopes: List[str] = []
 
 
 def verify_password(plain_password, hashed_password):
@@ -69,9 +76,12 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-async def get_current_service(
-    token: str = Depends(OAUTH2_SERVICE_SCHEME), session=Depends(get_session)
+def get_current_service(
+    _: SecurityScopes,
+    token: str = Depends(OAUTH2_SERVICE_SCHEME),
+    session=Depends(get_session),
 ):
+
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -91,6 +101,20 @@ async def get_current_service(
     if user is None:
         raise credentials_exception
     return user
+
+
+class AllowLevels:
+    def __init__(self, *levels: Access):
+        self.levels = levels
+
+    def __call__(self, user=Depends(get_current_service)):
+        if user.access_level not in self.levels:
+            raise HTTPException(
+                status_code=401,
+                detail="Not allowed for this service",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return True
 
 
 @router.post("/login")

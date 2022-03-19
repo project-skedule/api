@@ -5,10 +5,10 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from extra.api_router import LoggingRouter
-from extra.service_auth import get_current_service
+from extra.service_auth import AllowLevels, get_current_service
 
 import valid_db_requests as db_validated
-from config import API_LESSON_NUMBER_PREFIX, API_PREFIX
+from config import API_LESSON_NUMBER_PREFIX, API_PREFIX, Access
 from config import DEFAULT_LOGGER as logger
 from config import get_session
 from extra import create_logger_dependency
@@ -23,14 +23,16 @@ router = APIRouter(
 )
 logger.info(f"Lesson_number router created on {API_PREFIX+API_LESSON_NUMBER_PREFIX}")
 
+lesson_allowed = AllowLevels(Access.Admin, Access.Parser)
+
 
 @router.post(
     "/new", tags=[LESSON_NUMBER, WEBSITE], response_model=outgoing.LessonNumber
 )
 async def create_new_lesson_number(
     lesson_number: incoming.LessonNumber,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(lesson_allowed),
 ) -> outgoing.LessonNumber:
     school = db_validated.get_school_by_id(session, lesson_number.school_id)
 
@@ -84,8 +86,8 @@ async def create_new_lesson_number(
 )
 async def update_timetable(
     request: updating.LessonNumber,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(lesson_allowed),
 ):
     lesson_number = db_validated.get_lesson_number_by_id(
         session, request.lesson_number_id

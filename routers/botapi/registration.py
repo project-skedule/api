@@ -3,9 +3,9 @@
 
 from fastapi import APIRouter, Depends
 from extra.api_router import LoggingRouter
-from extra.service_auth import get_current_service
+from extra.service_auth import AllowLevels, get_current_service
 import valid_db_requests as db_validated
-from config import API_PREFIX, API_REGISTRATION_PREFIX
+from config import API_PREFIX, API_REGISTRATION_PREFIX, Access
 from config import DEFAULT_LOGGER as logger
 from config import get_session
 from extra import create_logger_dependency
@@ -22,12 +22,14 @@ router = APIRouter(
 )
 logger.info(f"Registation router created on {API_PREFIX+API_REGISTRATION_PREFIX}")
 
+registration_allowed = AllowLevels(Access.Admin, Access.Telegram)
+
 
 @router.post("/student", tags=[TELEGRAM, STUDENT], response_model=registered.Student)
 async def register_student(
     request: incoming.Student,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(registration_allowed),
 ):
     db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
     subclass = db_validated.get_subclass_by_id(session, request.subclass_id)
@@ -82,8 +84,8 @@ async def register_student(
 @router.post("/teacher", tags=[TEACHER, TELEGRAM], response_model=registered.Teacher)
 async def register_teacher(
     request: incoming.Teacher,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(registration_allowed),
 ):
     db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
     teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
@@ -135,8 +137,8 @@ async def register_teacher(
 )
 async def register_administration(
     request: incoming.Administration,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(registration_allowed),
 ):
     db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
     school = db_validated.get_school_by_id(session, request.school_id)
@@ -184,8 +186,8 @@ async def register_administration(
 @router.post("/parent", tags=[PARENT, TELEGRAM], response_model=registered.Parent)
 async def register_parent(
     request: incoming.Parent,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(registration_allowed),
 ):
     db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
 

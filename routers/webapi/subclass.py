@@ -3,10 +3,10 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from extra.api_router import LoggingRouter
-from extra.service_auth import get_current_service
+from extra.service_auth import AllowLevels, get_current_service
 
 import valid_db_requests as db_validated
-from config import API_PREFIX, API_SUBCLASS_PREFIX
+from config import API_PREFIX, API_SUBCLASS_PREFIX, Access
 from config import DEFAULT_LOGGER as logger
 from config import get_session
 from extra import create_logger_dependency
@@ -21,11 +21,13 @@ router = APIRouter(
 )
 logger.info(f"Subclass fouter created on {API_PREFIX + API_SUBCLASS_PREFIX}")
 
+subclass_allow = AllowLevels(Access.Admin, Access.Parser)
+
 
 @router.post("/new", tags=[SUBCLASS, WEBSITE], response_model=outgoing.Subclass)
 async def create_new_subclass(
     subclass: incoming.Subclass,
-    _=Depends(get_current_service),
+    _=Depends(subclass_allow),
     session=Depends(get_session),
 ) -> outgoing.Subclass:
     school = db_validated.get_school_by_id(session, subclass.school_id)
@@ -66,7 +68,7 @@ async def create_new_subclass(
 @router.put("/update", tags=[SUBCLASS, WEBSITE], response_model=outgoing.Subclass)
 async def update_subclass(
     request: updating.Subclass,
-    _=Depends(get_current_service),
+    _=Depends(subclass_allow),
     session=Depends(get_session),
 ):
     subclass = db_validated.get_subclass_by_id(session, request.subclass_id)

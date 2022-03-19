@@ -7,10 +7,10 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import Field
 from extra.api_router import LoggingRouter
-from extra.service_auth import get_current_service
+from extra.service_auth import AllowLevels, get_current_service
 from api_types.types import ID
 import valid_db_requests as db_validated
-from config import API_LESSON_GETTER_PREFIX, API_PREFIX
+from config import API_LESSON_GETTER_PREFIX, API_PREFIX, Access
 from config import DEFAULT_LOGGER as logger
 from config import get_session
 from extra import create_logger_dependency
@@ -25,6 +25,8 @@ router = APIRouter(
 )
 logger.info(f"Lesson Getter router created on {API_PREFIX+API_LESSON_GETTER_PREFIX}")
 
+lessons_allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
+
 
 @router.get("/day", tags=[LESSON, TELEGRAM], response_model=info.LessonsForDay)
 async def get_lesson_for_day(
@@ -32,8 +34,8 @@ async def get_lesson_for_day(
     day_of_week: Annotated[int, Field(ge=1, le=7)],
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(lessons_allowed),
 ) -> info.LessonsForDay:
     if teacher_id is not None and subclass_id is not None:
         raise HTTPException(
@@ -115,8 +117,8 @@ async def get_lesson_for_range(
     end_index: Annotated[int, Field(ge=1, le=7)],
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(lessons_allowed),
 ) -> info.LessonsForRange:
     if teacher_id is not None and subclass_id is not None:
         raise HTTPException(
@@ -220,8 +222,8 @@ async def get_certain_lesson(
     day_of_week: Annotated[int, Field(ge=1, le=7)],
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(lessons_allowed),
 ) -> item.Lesson:
     if teacher_id is not None and subclass_id is not None:
         raise HTTPException(

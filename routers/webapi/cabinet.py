@@ -3,10 +3,10 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from extra.api_router import LoggingRouter
-from extra.service_auth import get_current_service
+from extra.service_auth import AllowLevels, get_current_service
 
 import valid_db_requests as db_validated
-from config import API_CABINET_PREFIX, API_PREFIX
+from config import API_CABINET_PREFIX, API_PREFIX, Access
 from config import DEFAULT_LOGGER as logger
 from config import get_session
 from extra import create_logger_dependency
@@ -21,12 +21,14 @@ router = APIRouter(
 )
 logger.info(f"Cabinet router created on {API_PREFIX+API_CABINET_PREFIX}")
 
+cabinets_allowed = AllowLevels(Access.Admin, Access.Parser)
+
 
 @router.post("/new", tags=[CABINET, WEBSITE], response_model=outgoing.Cabinet)
 async def create_new_cabinet(
     cabinet: incoming.Cabinet,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(cabinets_allowed),
 ) -> outgoing.Cabinet:
     corpus = db_validated.get_corpus_by_id(session, cabinet.corpus_id)
     school = db_validated.get_school_by_id(session, corpus.school_id)
@@ -63,8 +65,8 @@ async def create_new_cabinet(
 @router.put("/update", tags=[CABINET, WEBSITE], response_model=outgoing.Cabinet)
 async def update_cabinet(
     request: updating.Cabinet,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(cabinets_allowed),
 ):
     cabinet = db_validated.get_cabinet_by_id(session, request.cabinet_id)
 

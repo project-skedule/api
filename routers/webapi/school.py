@@ -3,10 +3,10 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from extra.api_router import LoggingRouter
-from extra.service_auth import get_current_service
+from extra.service_auth import AllowLevels, get_current_service
 
 import valid_db_requests as db_validated
-from config import API_PREFIX, API_SCHOOL_PREFIX
+from config import API_PREFIX, API_SCHOOL_PREFIX, Access
 from config import DEFAULT_LOGGER as logger
 from config import get_session
 from extra import create_logger_dependency
@@ -21,12 +21,14 @@ router = APIRouter(
 )
 logger.info(f"School router created on {API_PREFIX+API_SCHOOL_PREFIX}")
 
+school_allowed = AllowLevels(Access.Admin, Access.Parser)
+
 
 @router.post("/new", tags=[SCHOOL, WEBSITE], response_model=outgoing.School)
 async def create_new_school(
     school: incoming.School,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(school_allowed),
 ) -> outgoing.School:
     logger.debug(f'Searching school with name "{school.name}"')
     check_unique = session.query(database.School).filter_by(name=school.name).all()
@@ -49,8 +51,8 @@ async def create_new_school(
 @router.put("/update", tags=[SCHOOL, WEBSITE], response_model=outgoing.School)
 async def update_school(
     request: updating.School,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(school_allowed),
 ):
     school = db_validated.get_school_by_id(session, request.school_id)
 

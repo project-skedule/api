@@ -3,10 +3,10 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from extra.api_router import LoggingRouter
-from extra.service_auth import get_current_service
+from extra.service_auth import AllowLevels, get_current_service
 
 import valid_db_requests as db_validated
-from config import API_PREFIX, API_TEACHER_PREFIX
+from config import API_PREFIX, API_TEACHER_PREFIX, Access
 from config import DEFAULT_LOGGER as logger
 from config import get_session
 from extra import create_logger_dependency
@@ -21,12 +21,14 @@ router = APIRouter(
 )
 logger.info(f"Teacher router created on {API_PREFIX+API_TEACHER_PREFIX}")
 
+teacher_allow = AllowLevels(Access.Admin, Access.Parser)
+
 
 @router.post("/new", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
 async def create_new_teacher(
     teacher: incoming.Teacher,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(teacher_allow),
 ) -> outgoing.Teacher:
     school = db_validated.get_school_by_id(session, teacher.school_id)
     logger.debug(
@@ -60,8 +62,8 @@ async def create_new_teacher(
 @router.put("/update", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
 async def update_teacher(
     request: updating.Teacher,
-    _=Depends(get_current_service),
     session=Depends(get_session),
+    _=Depends(teacher_allow),
 ):
     teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
 

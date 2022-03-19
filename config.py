@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from enum import Enum, auto
 from os import getenv as config
 from pathlib import Path
 from typing import Callable, ContextManager
@@ -83,6 +84,13 @@ DEFAULT_LOGGER.debug(f"Connecting to database with {__connect_address__}")
 SESSION_FACTORY: Callable[..., ContextManager[Session]] = scoped_session(
     sessionmaker(bind=ENGINE, autocommit=False)
 )
+
+
+class Access(Enum):
+    Admin = 5
+    Telegram = 4
+    Parser = 3
+    Website = 2
 
 
 def get_session():

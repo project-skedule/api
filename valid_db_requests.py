@@ -39,6 +39,19 @@ def get_school_by_id(session: Session, uid: int) -> database.School:
     return school
 
 
+def get_tag_by_id(session: Session, uid: int) -> database.Tag:
+    logger.debug(f"Searching tag with id {uid}")
+    tag = session.query(database.Tag).filter_by(id=uid).first()
+    if tag is None:
+        logger.debug(f"Raised an exception because tag with id {uid} does not exists")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Tag with id {uid} does not exist",
+        )
+    logger.debug(f"Successfully found tag with id {uid}")
+    return tag
+
+
 def get_corpus_by_id(session: Session, uid: int) -> database.Corpus:
     logger.debug(f"Searchin corpus with id {uid}")
     corpus = session.query(database.Corpus).filter_by(id=uid).first()

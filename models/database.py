@@ -49,6 +49,31 @@ lesson_subclass_association = Table(
 # ==================================================================================================
 
 
+class Tag(Base):
+    __tablename__ = "tag"
+    id = Column(Integer, **mod(0b1011))
+    label = Column(String(length=50), **mod(0b0001))
+
+
+# ==================================================================================================
+
+cabinet_tag_association = Table(
+    "cabinet_tag_association",
+    Base.metadata,
+    Column("cabinet_id", Integer, ForeignKey("cabinet.id")),
+    Column("tag_id", Integer, ForeignKey("tag.id")),
+)
+
+# ==================================================================================================
+teacher_tag_association = Table(
+    "teacher_tag_association",
+    Base.metadata,
+    Column("teacher_id", Integer, ForeignKey("teacher.id")),
+    Column("tag_id", Integer, ForeignKey("tag.id")),
+)
+# ==================================================================================================
+
+
 class Account(Base):
     __tablename__ = "account"
     id = Column(Integer, **mod(0b1011))
@@ -107,6 +132,11 @@ class Teacher(Base):
     name = Column(String(length=200), **mod(0b0000))
     school_id = Column(Integer, ForeignKey("school.id"), **mod(0b0000))
     lessons = relationship("Lesson", backref=backref("teacher"))
+    tags = relationship(
+        "Tag",
+        secondary=teacher_tag_association,
+        backref=backref("teachers", lazy="dynamic"),
+    )
 
 
 # ==================================================================================================
@@ -165,6 +195,11 @@ class Cabinet(Base):
     corpus_id = Column(Integer, ForeignKey("corpus.id"), **mod(0b0000))
     lessons = relationship("Lesson", backref=backref("cabinet"))
     school_id = Column(Integer, ForeignKey("school.id"), **mod(0b0100))
+    tags = relationship(
+        "Tag",
+        secondary=cabinet_tag_association,
+        backref=backref("cabinets", lazy="dynamic"),
+    )
 
 
 # ==================================================================================================
@@ -268,3 +303,6 @@ class HarvestUser(Base):
     logged_in = Column(Boolean, **mod(0b0000))
     activated = Column(Boolean, **mod(0b0000))
     image = Column(String(length=300), **mod(0b0000))
+
+
+# ==================================================================================================

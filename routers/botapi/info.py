@@ -29,7 +29,7 @@ from models.bot import incoming, info, item, telegram
 from pydantic import Field
 from typing_extensions import Annotated
 
-info_allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Website)
+info_allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_INFO_PREFIX,

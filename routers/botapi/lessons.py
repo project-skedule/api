@@ -99,6 +99,7 @@ async def get_lesson_for_day(
                 id=lesson.cabinet.id,
                 floor=lesson.cabinet.floor,
                 name=lesson.cabinet.name,
+                tags=[tag.label for tag in lesson.cabinet.tags],
                 corpus=item.Corpus(
                     address=lesson.corpus.address,
                     name=lesson.corpus.name,
@@ -196,6 +197,7 @@ async def get_lesson_for_range(
                     floor=lesson.cabinet.floor,
                     name=lesson.cabinet.name,
                     id=lesson.cabinet.id,
+                    tags=[tag.label for tag in lesson.cabinet.tags],
                     corpus=item.Corpus(
                         id=lesson.corpus.id,
                         address=lesson.corpus.address,
@@ -294,6 +296,7 @@ async def get_certain_lesson(
             name=lesson.cabinet.name,
             floor=lesson.cabinet.floor,
             id=lesson.cabinet.id,
+            tags=[tag.label for tag in lesson.cabinet.tags],
             corpus=item.Corpus(
                 name=lesson.corpus.name,
                 address=lesson.corpus.address,

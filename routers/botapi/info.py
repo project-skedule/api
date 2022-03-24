@@ -263,6 +263,7 @@ async def get_cabinets(
                 name=cabinet.name,
                 floor=cabinet.floor,
                 id=cabinet.id,
+                tags=[tag.label for tag in cabinet.tags],
                 corpus=item.Corpus(
                     address=cabinet.corpus.address,
                     name=cabinet.corpus.name,
@@ -311,6 +312,7 @@ async def get_lessons(
                     id=lesson.cabinet.id,
                     floor=lesson.cabinet.floor,
                     name=lesson.cabinet.name,
+                    tags=[tag.label for tag in lesson.cabinet.tags],
                     corpus=item.Corpus(
                         address=lesson.corpus.address,
                         name=lesson.corpus.name,
@@ -401,6 +403,7 @@ async def get_free_cabinet(
                 id=cabinet.id,
                 floor=cabinet.floor,
                 name=cabinet.name,
+                tags=[tag.label for tag in cabinet.tags],
                 corpus=item.Corpus(
                     address=cabinet.corpus.address,
                     name=cabinet.corpus.name,

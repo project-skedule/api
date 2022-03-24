@@ -23,7 +23,7 @@ from extra.tags import (
     TELEGRAM,
     WEBSITE,
 )
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.bot import incoming, info, item, telegram
 from pydantic import Field
@@ -134,6 +134,37 @@ async def get_teacher_by_levenshtein(
         )
     )
     teachers = teachers[:MAX_LEVENSHTEIN_RESULTS]
+    return info.Teachers(
+        data=[
+            item.Teacher(
+                name=teacher.name,
+                id=teacher.id,
+                tags=[tag.label for tag in teacher.tags],
+            )
+            for teacher in teachers
+        ]
+    )
+
+
+@router.get(
+    "/teachers/tag", tags=[INFO, TEACHER, TELEGRAM], response_model=info.Teachers
+)
+async def get_teachers_by_tag(
+    school_id: ID,
+    tag: str,
+    session=Depends(get_session),
+):
+    tag = session.query(database.Tag).filter_by(label=tag).first()
+    if not tag:
+        raise HTTPException(status_code=404, detail="No such tag")
+
+    teachers = (
+        session.query(database.Teacher)
+        .filter_by(school_id=school_id)
+        .filter(database.Teacher.tags.contains(tag))
+        .all()
+    )
+    logger.info(list(teachers))
     return info.Teachers(
         data=[
             item.Teacher(
@@ -271,6 +302,41 @@ async def get_cabinets(
                 ),
             )
             for cabinet in school.cabinets
+        ]
+    )
+
+
+@router.get(
+    "/cabinets/tag", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
+)
+async def get_cabinets_by_tag(
+    school_id: ID,
+    tag: str,
+    session=Depends(get_session),
+):
+    tag = session.query(database.Tag).filter_by(label=tag).first()
+    if not tag:
+        raise HTTPException(status_code=404, detail="No such tag")
+    cabinets = (
+        session.query(database.Cabinet)
+        .filter_by(school_id=school_id)
+        .filter(database.Cabinet.tags.contains(tag))
+        .all()
+    )
+    return info.Cabinets(
+        data=[
+            item.Cabinet(
+                name=cabinet.name,
+                floor=cabinet.floor,
+                id=cabinet.id,
+                tags=[tag.label for tag in cabinet.tags],
+                corpus=item.Corpus(
+                    address=cabinet.corpus.address,
+                    name=cabinet.corpus.name,
+                    id=cabinet.corpus.id,
+                ),
+            )
+            for cabinet in cabinets
         ]
     )
 

@@ -58,6 +58,7 @@ async def get_teacher(
     return item.Teacher(
         name=teacher.name,
         id=teacher.id,
+        tags=[tag.label for tag in teacher.tags],
     )
 
 
@@ -120,6 +121,7 @@ async def get_lesson(
         teacher=item.Teacher(
             name=lesson.teacher.name,
             id=lesson.teacher.id,
+            tags=[tag.label for tag in lesson.teacher.tags],
         ),
         cabinet=item.Cabinet(
             id=lesson.cabinet.id,

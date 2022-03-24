@@ -48,7 +48,10 @@ async def create_new_cabinet(
             detail=f"Cabinet with name {request.name} already exists",
         )
     cabinet = database.Cabinet(
-        floor=request.floor, name=request.name, tags=get_tags(session, request.tags)
+        floor=request.floor,
+        name=request.name,
+        tags=get_tags(session, request.tags),
+        corpus_id=corpus.id,
     )
     logger.info(
         f"Adding cabinet with name {cabinet.name} on floor {cabinet.floor} to corpus with id {corpus.id}"
@@ -93,7 +96,7 @@ async def update_cabinet(
             )
         cabinet.name = request.name
 
-    if not request.tags:
+    if request.tags:
         cabinet.tags = get_tags(session, request.tags)
 
     session.add(cabinet)

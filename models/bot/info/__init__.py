@@ -13,3 +13,4 @@ from models.bot.info.parallels import Parallels
 from models.bot.info.schools import Schools
 from models.bot.info.subclasses import Subclasses
 from models.bot.info.teachers import Teachers
+from models.bot.info.tags import Tags

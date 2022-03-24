@@ -84,6 +84,7 @@ async def get_lesson_for_day(
             teacher=item.Teacher(
                 name=lesson.teacher.name,
                 id=lesson.teacher.id,
+                tags=[tag.label for tag in lesson.teacher.tags],
             ),
             subclasses=[
                 item.Subclass(
@@ -180,6 +181,7 @@ async def get_lesson_for_range(
                 teacher=item.Teacher(
                     name=lesson.teacher.name,
                     id=lesson.teacher.id,
+                    tags=[tag.label for tag in lesson.teacher.tags],
                 ),
                 subclasses=[
                     item.Subclass(
@@ -301,6 +303,7 @@ async def get_certain_lesson(
         teacher=item.Teacher(
             name=lesson.teacher.name,
             id=lesson.teacher.id,
+            tags=[tag.label for tag in lesson.teacher.tags],
         ),
         subclasses=[
             item.Subclass(

@@ -64,6 +64,18 @@ async def get_subclasses(
 
 
 @router.get(
+    "/tags/all",
+    tags=[INFO, TEACHER, WEBSITE, TELEGRAM],
+    response_model=info.Tags,
+)
+async def get_all_tags(
+    session=Depends(get_session),
+    _=Depends(info_allowed),
+):
+    return info.Tags(data=[tag.label for tag in session.query(database.Tag).all()])
+
+
+@router.get(
     "/teachers/all",
     tags=[INFO, TEACHER, WEBSITE, TELEGRAM],
     response_model=info.Teachers,
@@ -79,6 +91,7 @@ async def get_teachers(
             item.Teacher(
                 name=teacher.name,
                 id=teacher.id,
+                tags=[tag.label for tag in teacher.tags],
             )
             for teacher in school.teachers
         ]
@@ -126,6 +139,7 @@ async def get_teacher_by_levenshtein(
             item.Teacher(
                 name=teacher.name,
                 id=teacher.id,
+                tags=[tag.label for tag in teacher.tags],
             )
             for teacher in teachers
         ]
@@ -278,7 +292,11 @@ async def get_lessons(
                     time_end=lesson.lesson_number.time_end,
                 ),
                 subject=lesson.subject,
-                teacher=item.Teacher(name=lesson.teacher.name, id=lesson.teacher.id),
+                teacher=item.Teacher(
+                    name=lesson.teacher.name,
+                    id=lesson.teacher.id,
+                    tags=[tag.label for tag in lesson.teacher.tags],
+                ),
                 day_of_week=lesson.day_of_week,
                 subclasses=[
                     item.Subclass(

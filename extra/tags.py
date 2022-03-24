@@ -23,9 +23,9 @@ STATS = "#stats"
 def get_tags(session: Session, request: List[str]) -> List[database.Tag]:
     tags = []
     for request_tag in request:
-        tag = session.query(database.Tag).filter_by(name=request_tag.lower()).first()
+        tag = session.query(database.Tag).filter_by(label=request_tag.lower()).first()
         if tag is None:
-            tag = database.Tag(name=request_tag.lower())
+            tag = database.Tag(label=request_tag.lower())
             session.add(tag)
         tags.append(tag)
     return tags

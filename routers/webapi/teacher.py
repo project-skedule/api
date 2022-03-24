@@ -8,7 +8,7 @@ from config import Access, get_session
 from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
-from extra.tags import TEACHER, WEBSITE
+from extra.tags import TEACHER, WEBSITE, get_tags
 from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.web import incoming, outgoing, updating
@@ -25,37 +25,40 @@ teacher_allow = AllowLevels(Access.Admin, Access.Parser)
 
 @router.post("/new", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
 async def create_new_teacher(
-    teacher: incoming.Teacher,
+    request: incoming.Teacher,
     session=Depends(get_session),
     _=Depends(teacher_allow),
 ) -> outgoing.Teacher:
-    school = db_validated.get_school_by_id(session, teacher.school_id)
+    school = db_validated.get_school_by_id(session, request.school_id)
     logger.debug(
-        f"Searching teacher with name {teacher.name} in school with id {teacher.school_id}"
+        f"Searching teacher with name {request.name} in school with id {request.school_id}"
     )
     check_unique = (
         session.query(database.Teacher)
-        .filter_by(name=teacher.name, school_id=teacher.school_id)
+        .filter_by(name=request.name, school_id=request.school_id)
         .all()
     )
     if check_unique:
         logger.debug(
-            f"Raise an expection because the teacher with name {teacher.name} already exists in school with id {school.id}"
+            f"Raise an expection because the teacher with name {request.name} already exists in school with id {school.id}"
         )
         raise HTTPException(
             status_code=409,
-            detail=f"Teacher with name {teacher.name} is already exists",
+            detail=f"Teacher with name {request.name} is already exists",
         )
-    teacher = database.Teacher(name=teacher.name)
+    tags = get_tags(session, request.tags)
+
+    request = database.Teacher(name=request.name)
+
     logger.info(
-        f"Adding teacher with name {teacher.name} to school with id {school.id}"
+        f"Adding teacher with name {request.name} to school with id {school.id}"
     )
-    school.teachers.append(teacher)
-    session.add(teacher)
+    school.teachers.append(request)
+    session.add(request)
     session.add(school)
     session.commit()
-    logger.debug(f"Teacher with name {teacher.name} acquired id {teacher.id}")
-    return outgoing.Teacher(id=teacher.id)
+    logger.debug(f"Teacher with name {request.name} acquired id {request.id}")
+    return outgoing.Teacher(id=request.id)
 
 
 @router.put("/update", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
@@ -81,6 +84,8 @@ async def update_teacher(
                 detail=f"Teacher with name {request.name} is already exists",
             )
         teacher.name = request.name
+    if request.tags:
+        teacher.tags = get_tags(session, request.tags)
 
     session.add(teacher)
     session.commit()

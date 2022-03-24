@@ -52,6 +52,7 @@ async def create_new_cabinet(
         name=request.name,
         tags=get_tags(session, request.tags),
         corpus_id=corpus.id,
+        school_id=school.id,
     )
     logger.info(
         f"Adding cabinet with name {cabinet.name} on floor {cabinet.floor} to corpus with id {corpus.id}"

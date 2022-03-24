@@ -48,17 +48,17 @@ async def create_new_teacher(
         )
     tags = get_tags(session, request.tags)
 
-    request = database.Teacher(name=request.name)
+    teacher = database.Teacher(name=request.name, tags=tags, school_id=school.id)
 
     logger.info(
-        f"Adding teacher with name {request.name} to school with id {school.id}"
+        f"Adding teacher with name {teacher.name} to school with id {school.id}"
     )
-    school.teachers.append(request)
-    session.add(request)
+    school.teachers.append(teacher)
+    session.add(teacher)
     session.add(school)
     session.commit()
-    logger.debug(f"Teacher with name {request.name} acquired id {request.id}")
-    return outgoing.Teacher(id=request.id)
+    logger.debug(f"Teacher with name {teacher.name} acquired id {teacher.id}")
+    return outgoing.Teacher(id=teacher.id)
 
 
 @router.put("/update", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)

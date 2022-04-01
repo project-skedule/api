@@ -9,3 +9,4 @@ from models.web.outgoing.school import School
 from models.web.outgoing.stats import Statistics
 from models.web.outgoing.subclass import Subclass
 from models.web.outgoing.teacher import Teacher
+from models.web.outgoing.history import HistoryAnnouncement

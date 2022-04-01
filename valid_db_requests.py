@@ -201,7 +201,7 @@ def get_lesson_by_id(session: Session, uid: int) -> database.Lesson:
     return lesson
 
 
-def get_account_by_telegram_id(session: Session, telegram_id: int):
+def get_account_by_telegram_id(session: Session, telegram_id: int) -> database.Account:
     logger.debug(f"Searching account with telegram id {telegram_id}")
     account = session.query(database.Account).filter_by(telegram_id=telegram_id).first()
 
@@ -216,3 +216,20 @@ def get_account_by_telegram_id(session: Session, telegram_id: int):
     logger.debug(f"Successfully found account with telegram id {telegram_id}")
 
     return account
+
+
+def get_role_by_id(session: Session, uid: int) -> database.Role:
+    logger.debug(f"Searching role with id {uid}")
+    role = session.query(database.Role).filter_by(id=uid).first()
+
+    if role is None:
+        logger.debug(
+            f"Raised an exception because account with role id {uid} does not exists"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail=f"Role with role id {uid} does not exists",
+        )
+    logger.debug(f"Successfully found role with id {uid}")
+
+    return role

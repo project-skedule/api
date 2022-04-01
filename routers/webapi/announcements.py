@@ -5,13 +5,14 @@ from typing import List
 
 import aiohttp
 import valid_db_requests as db_validated
-from config import API_ANNOUNCEMENTS_PREFIX, API_PREFIX
+from config import API_ANNOUNCEMENTS_PREFIX, API_PREFIX, MAX_HISTORY_RESULTS
 from config import DEFAULT_LOGGER as logger
 from config import TRANSMITTER_HOST, TRANSMITTER_PORT, Access, get_session
 from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
 from extra.tags import ANNOUNCEMENTS, WEBSITE
+from api_types import ID
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from models import database
@@ -226,17 +227,13 @@ def announcement_preview(request, session):
     return teachers, subclasses, telegram_ids
 
 
-class SimpleAnnouncement(BaseModel):
-    text: str
-
-
 @router.post(
     "/toall",
     tags=[ANNOUNCEMENTS, WEBSITE],
     response_model=List[int],
 )
 async def send_to_all(
-    request: SimpleAnnouncement,
+    request: incoming.SimpleAnnouncement,
     session=Depends(get_session),
     _=Depends(AllowLevels(Access.Admin)),
 ):
@@ -254,3 +251,20 @@ async def send_to_all(
                     status_code=500, detail="Can not post your announcement"
                 )
     return telegram_ids
+
+
+@router.get(
+    "/history",
+    tags=[ANNOUNCEMENTS, WEBSITE],
+    response_model=outgoing.HistoryAnnouncement,
+)
+async def get_history(
+    role_id: ID,
+    session=Depends(get_session),
+    _=Depends(AllowLevels(Access.Admin, Access.Telegram)),
+):
+    role = db_validated.get_role_by_id(session, role_id)
+    data = list(sorted(role.announcements, key=lambda x: -x.id))[:MAX_HISTORY_RESULTS]
+    return outgoing.HistoryAnnouncement(
+        data=[outgoing.history.HistoryEntity(link=x.link) for x in data]
+    )

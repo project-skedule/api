@@ -37,7 +37,9 @@ async def post_new_announcement(
     session=Depends(get_session),
     _=Depends(announcements_allowed),
 ):
-    teachers, subclasses, telegram_ids = announcement_preview(request, session)
+    teachers, subclasses, telegram_ids = process_announcement(
+        request, session, save_to_database=True
+    )
 
     async with aiohttp.ClientSession() as http_session:
         async with http_session.post(
@@ -72,12 +74,12 @@ async def post_new_announcement(
     tags=[ANNOUNCEMENTS, WEBSITE],
     response_model=outgoing.AnnouncementsPreview,
 )
-async def post_new_announcement(
+async def preview_announcement(
     request: incoming.Announcement,
     session=Depends(get_session),
     _=Depends(announcements_allowed),
 ):
-    teachers, subclasses, telegram_ids = announcement_preview(request, session)
+    teachers, subclasses, _ = process_announcement(request, session)
 
     return outgoing.AnnouncementsPreview(
         teachers=[teacher.name for teacher in teachers],
@@ -94,7 +96,7 @@ async def post_new_announcement(
     )
 
 
-def announcement_preview(request, session):
+def process_announcement(request, session, save_to_database=False):
     school = db_validated.get_school_by_id(session, request.school_id)
 
     teachers = set()
@@ -190,7 +192,7 @@ def announcement_preview(request, session):
     for account in accounts_db:
         telegram_ids.add(account.telegram_id)
 
-    for _, role in teachers_roles:
+    for _, role in student_roles:
         roles.add(role)
 
     if request.resend_to_parents:
@@ -217,12 +219,13 @@ def announcement_preview(request, session):
         for role in parents:
             roles.add(role)
 
-    announcement = database.Announcement(
-        link=request.text, school_id=school.id, roles=list(roles)
-    )
+    if save_to_database:
+        announcement = database.Announcement(link=request.text, school_id=school.id)
+        for role in roles:
+            announcement.roles.append(role)
 
-    session.add(announcement)
-    session.commit()
+        session.add(announcement)
+        session.commit()
     return teachers, subclasses, telegram_ids
 
 

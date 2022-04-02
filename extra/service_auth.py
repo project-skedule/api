@@ -21,7 +21,7 @@ from fastapi.security import (
 from jose import JWTError, jwt
 from models import database
 from passlib.context import CryptContext
-from pydantic import BaseModel
+from config import BaseModel
 from sqlalchemy.orm.session import Session
 
 # do not user logging middlewhere here

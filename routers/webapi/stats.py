@@ -12,7 +12,7 @@ from extra.tags import STATS
 from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.web import incoming, outgoing, updating
-from pydantic import BaseModel
+from config import BaseModel
 
 router = APIRouter(
     prefix=API_PREFIX + API_STATISTICS_PREFIX,

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from config import BaseModel
 
 
 class SimpleAnnouncement(BaseModel):

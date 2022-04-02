@@ -1,6 +1,7 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from config import BaseModel
+from pydantic import Field
 
 
 class Cabinet(BaseModel):

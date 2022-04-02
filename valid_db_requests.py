@@ -80,9 +80,15 @@ def get_teacher_by_id(session: Session, uid: int) -> database.Teacher:
     return teacher
 
 
-def get_teacher_by_name(session: Session, name: str) -> database.Teacher:
+def get_teacher_by_name(
+    session: Session, name: str, school_id: int
+) -> database.Teacher:
     logger.debug(f"Searching for teacher with name {name}")
-    teacher = session.query(database.Teacher).filter_by(name=name).first()
+    teacher = (
+        session.query(database.Teacher)
+        .filter_by(name=name, school_id=school_id)
+        .first()
+    )
     if teacher is None:
         logger.debug(
             f"Raised an exception because teacher with name {name} does not exists"

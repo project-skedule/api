@@ -1,6 +1,6 @@
 from models.bot.telegram.outgoing.parent import Parent
 from models.database import RoleEnum
-from pydantic import BaseModel
+from config import BaseModel
 
 
 class ParentRole(BaseModel):

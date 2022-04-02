@@ -1,6 +1,7 @@
 from typing import List
 
-from pydantic import BaseModel, Field
+from config import BaseModel
+from pydantic import Field
 
 
 class Subclass(BaseModel):
@@ -9,8 +10,12 @@ class Subclass(BaseModel):
     additional_identificator: str = Field(max_length=50)
 
 
+class Teacher(BaseModel):
+    name: str
+
+
 class AnnouncementsPreview(BaseModel):
-    teachers: List[str]
+    teachers: List[Teacher]
     subclasses: List[Subclass]
     sent_to_parents: bool
     sent_only_to_parents: bool

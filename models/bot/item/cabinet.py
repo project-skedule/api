@@ -1,6 +1,7 @@
 from typing import List
 from models.bot.item.corpus import Corpus
-from pydantic import BaseModel, Field
+from config import BaseModel
+from pydantic import Field
 
 
 class Cabinet(BaseModel):

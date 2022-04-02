@@ -1,6 +1,6 @@
 from models.bot.telegram.outgoing.student import Student
 from models.database import RoleEnum
-from pydantic import BaseModel
+from config import BaseModel
 
 
 class StudentRole(BaseModel):

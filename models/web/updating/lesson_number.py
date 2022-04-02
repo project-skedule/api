@@ -2,7 +2,8 @@ from re import compile as re_compile
 from re import match
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
+from config import BaseModel
+from pydantic import Field, validator
 
 time_regex = re_compile(r"[0-2]?[0-9]:[0-5][0-9]")
 

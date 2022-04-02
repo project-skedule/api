@@ -1,7 +1,7 @@
 from typing import List
 
 from models.bot.item import Corpus
-from pydantic import BaseModel
+from config import BaseModel
 
 
 class Corpuses(BaseModel):

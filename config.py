@@ -10,6 +10,8 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.session import Session
+from pydantic import BaseModel as PydanticBaseModel
+
 
 ROOT_DIR = Path(__file__).parent
 LOGGER_CONFIG = ROOT_DIR / "logger_config.json"
@@ -114,3 +116,8 @@ def get_session():
         raise HTTPException(status_code=500, detail="SQL Error")
     finally:
         session.close()
+
+
+class BaseModel(PydanticBaseModel):
+    class Config:
+        orm_mode = True

@@ -1,7 +1,8 @@
 from typing import List
 
 from models.bot.item import Lesson
-from pydantic import BaseModel, Field
+from config import BaseModel
+from pydantic import Field
 
 
 class LessonsForDay(BaseModel):

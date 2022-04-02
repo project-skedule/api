@@ -17,7 +17,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from models import database
 from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr
+from config import BaseModel
+from pydantic import EmailStr
 
 # do not user logging middlewhere here
 router = APIRouter(

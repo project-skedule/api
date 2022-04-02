@@ -1,7 +1,7 @@
 from typing import List
 
 from models.bot.item import School
-from pydantic import BaseModel
+from config import BaseModel
 
 
 class Schools(BaseModel):

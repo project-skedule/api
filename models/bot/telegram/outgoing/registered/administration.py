@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import Optional
 
 from models.bot.telegram.outgoing.administration_role import AdministrationRole
-from pydantic import BaseModel, Field
+from config import BaseModel
+from pydantic import Field
 
 
 class Administration(BaseModel):

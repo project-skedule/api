@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel
+from config import BaseModel
 
 
 class Parallels(BaseModel):

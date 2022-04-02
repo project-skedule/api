@@ -1,5 +1,6 @@
 from models.bot.item.school import School
-from pydantic import BaseModel, Field
+from config import BaseModel
+from pydantic import Field
 
 
 class Teacher(BaseModel):

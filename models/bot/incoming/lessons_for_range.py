@@ -2,7 +2,8 @@ from typing import Union
 
 from models.bot.incoming.subclass import Subclass
 from models.bot.incoming.teacher import Teacher
-from pydantic import BaseModel, Field
+from config import BaseModel
+from pydantic import Field
 
 
 class LessonsForRange(BaseModel):

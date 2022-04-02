@@ -37,13 +37,12 @@ async def post_new_announcement(
     session=Depends(get_session),
     _=Depends(announcements_allowed),
 ):
-    teachers, subclasses, ids = process_announcement(session, request, save=True)
-    await send_to_transmitter(request.text, ids)
+    teachers, subclasses = await process_announcement(session, request, save=True)
     return outgoing.AnnouncementsPreview(
         teachers=[outgoing.preview.Teacher.from_orm(t) for t in teachers],
         subclasses=[outgoing.preview.Subclass.from_orm(s) for s in subclasses],
         sent_to_parents=request.resend_to_parents,
-        sent_only_to_parents=request.sent_only_to_parents,
+        sent_only_to_parents=request.send_only_to_parents,
     )
 
 
@@ -57,12 +56,12 @@ async def preview_announcement(
     session=Depends(get_session),
     _=Depends(announcements_allowed),
 ):
-    teachers, subclasses, _ = process_announcement(session, session)
+    teachers, subclasses = await process_announcement(session, session, save=False)
     return outgoing.AnnouncementsPreview(
         teachers=[outgoing.preview.Teacher.from_orm(t) for t in teachers],
         subclasses=[outgoing.preview.Subclass.from_orm(s) for s in subclasses],
         sent_to_parents=request.resend_to_parents,
-        sent_only_to_parents=request.sent_only_to_parents,
+        sent_only_to_parents=request.send_only_to_parents,
     )
 
 
@@ -94,5 +93,5 @@ async def get_history(
     role = db_validated.get_role_by_id(session, role_id)
     data = list(sorted(role.announcements, key=lambda x: -x.id))[:MAX_HISTORY_RESULTS]
     return outgoing.HistoryAnnouncement(
-        data=[outgoing.history.HistoryEntity(link=x.link) for x in data]
+        data=[outgoing.history.HistoryEntity(link=x.link, title=x.title) for x in data]
     )

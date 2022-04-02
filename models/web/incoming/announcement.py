@@ -15,8 +15,9 @@ class Teacher(BaseModel):
 
 
 class Announcement(BaseModel):
-    text: str = Field(max_length=2500, min_length=20)
+    title: str = Field(max_length=128)
+    text: str = Field(max_length=2500, min_length=5)
     school_id: int = Field(ge=1, le=2147483647)
     filters: List[Union[Teacher, Subclass]]
     resend_to_parents: bool
-    sent_only_to_parents: bool
+    send_only_to_parents: bool

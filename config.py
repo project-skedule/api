@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.session import Session
+from sqlalchemy.sql import select, text
 from pydantic import BaseModel as PydanticBaseModel
 
 
@@ -101,7 +102,7 @@ def get_session():
     try:
         for _ in range(10):
             try:
-                session.execute("SELECT 1")
+                session.execute(select(text("1")))
             except sqlalchemy.exc.InterfaceError as error:  # type: ignore
                 session: Session = SESSION_FACTORY()
                 continue

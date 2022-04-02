@@ -1,4 +1,4 @@
-# pyright: reportUnknownMemberType=false
+# type: ignore
 
 import valid_db_requests as db_validated
 from api_types import ID

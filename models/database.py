@@ -1,4 +1,4 @@
-# pyright: reportUnknownArgumentType=false, reportUnknownMemberType=false, reportUnknownVariableType=false, reportUntypedBaseClass=false
+# type: ignore
 
 from enum import Enum as EnumClass
 from typing import Dict
@@ -269,6 +269,7 @@ class Announcement(Base):
     id = Column(Integer, **mod(0b1011))
     school_id = Column(Integer, ForeignKey("school.id"), **mod(0b0000))
     link = Column(String(length=500), **mod(0b0000))
+    title = Column(String(length=150), **mod(0b0000))
     roles = relationship(
         "Role",
         secondary=role_announcement_association,

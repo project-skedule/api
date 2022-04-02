@@ -5,6 +5,7 @@ from pydantic import Field
 
 class HistoryEntity(BaseModel):
     link: str
+    title: str
 
 
 class HistoryAnnouncement(BaseModel):

@@ -10,6 +10,8 @@ import aiohttp
 from fastapi.exceptions import HTTPException
 from config import TRANSMITTER_HOST, TRANSMITTER_PORT
 from config import DEFAULT_LOGGER as logger
+from telegraph.aio import Telegraph
+from telegraph.exceptions import InvalidHTML
 
 
 def get_students(
@@ -75,9 +77,9 @@ def get_parents(
     return telegram_ids, roles
 
 
-def process_announcement(
+async def process_announcement(
     session, request, save=False
-) -> Tuple[Set[database.Teacher], Set[database.Subclass], Set[Column]]:
+) -> Tuple[Set[database.Teacher], Set[database.Subclass]]:
     school = db_validated.get_school_by_id(session, request.school_id)
 
     teachers = set()
@@ -121,7 +123,7 @@ def process_announcement(
     else:
         teacher_telegram_ids, teacher_roles = set(), set()
 
-    if not request.sent_only_to_parents:
+    if not request.send_only_to_parents:
         students_telegram_ids, students_roles = get_students(session, subclasses)
     else:
         students_telegram_ids, students_roles = set(), set()
@@ -135,23 +137,29 @@ def process_announcement(
     telegram_ids = teacher_telegram_ids | students_telegram_ids | parent_telegram_ids
 
     if save:
-        announcement = database.Announcement(link=request.text, school_id=school.id)
+        link = await publish_to_telegraph(request.title, request.text)
+        logger.info(link)
+        announcement = database.Announcement(
+            title=request.title, link=link, school_id=school.id
+        )
         for role in roles:
             announcement.roles.append(role)
 
         session.add(announcement)
         session.commit()
 
-    return teachers, subclasses, telegram_ids
+        await send_to_transmitter(link, telegram_ids)
+
+    return teachers, subclasses
 
 
 async def send_to_transmitter(
-    text: str, telegram_ids: Union[List[Column], Set[Column]]
+    link: str, telegram_ids: Union[List[Column], Set[Column]]
 ):
     async with aiohttp.ClientSession() as http_session:
         async with http_session.post(
             f"http://{TRANSMITTER_HOST}:{TRANSMITTER_PORT}/api/trans/redirect/telegram",
-            json={"text": text, "telegram_ids": list(telegram_ids)},
+            json={"link": link, "telegram_ids": list(telegram_ids)},
         ) as response:
             if response.status != 200:
                 logger.error(
@@ -160,3 +168,24 @@ async def send_to_transmitter(
                 raise HTTPException(
                     status_code=500, detail="Can not post your announcement"
                 )
+
+
+async def publish_to_telegraph(title: str, text: str) -> str:
+    client = Telegraph()
+    await client.create_account(
+        short_name="skedule_bot",
+        author_name="Skedule Publisher",
+        author_url="https://t.me/skedule_bot",
+        replace_token=True,
+    )
+    try:
+        page = await client.create_page(
+            title,
+            html_content=text,
+            author_name="Skedule Publisher",
+            author_url="https://t.me/skedule_bot",
+        )
+    except InvalidHTML as e:
+        raise HTTPException(status_code=404, detail=f"Invalid HTML: {e}")
+
+    return page["url"]

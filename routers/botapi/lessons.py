@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Any, Dict, Optional, Union
 
 import valid_db_requests as db_validated
@@ -25,18 +26,18 @@ router = APIRouter(
 )
 logger.info(f"Lesson Getter router created on {API_PREFIX+API_LESSON_GETTER_PREFIX}")
 
-lessons_allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
+allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
 
 
-@router.get("/day", tags=[LESSON, TELEGRAM], response_model=info.LessonsForDay)
+@router.get("/day", tags=[LESSON], response_model=info.LessonsForDay)
 async def get_lesson_for_day(
     school_id: ID,
     day_of_week: Annotated[int, Field(ge=1, le=7)],
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
     session=Depends(get_session),
-    _=Depends(lessons_allowed),
-) -> info.LessonsForDay:
+    _=Depends(allowed),
+):
     if teacher_id is not None and subclass_id is not None:
         raise HTTPException(
             status_code=422, detail="You must specify a subclass_id or a teacher_id"
@@ -70,45 +71,7 @@ async def get_lesson_for_day(
 
     lessons = sorted(lessons, key=lambda x: x.lesson_number.number)
 
-    returned_lesson = [
-        item.Lesson(
-            id=lesson.id,
-            lesson_number=item.LessonNumber(
-                id=lesson.lesson_number.id,
-                number=lesson.lesson_number.number,
-                time_start=lesson.lesson_number.time_start,
-                time_end=lesson.lesson_number.time_end,
-            ),
-            day_of_week=lesson.day_of_week,
-            subject=lesson.subject,
-            teacher=item.Teacher(
-                name=lesson.teacher.name,
-                id=lesson.teacher.id,
-                tags=[tag.label for tag in lesson.teacher.tags],
-            ),
-            subclasses=[
-                item.Subclass(
-                    id=subclass.id,
-                    educational_level=subclass.educational_level,
-                    identificator=subclass.identificator,
-                    additional_identificator=subclass.additional_identificator,
-                )
-                for subclass in lesson.subclasses
-            ],
-            cabinet=item.Cabinet(
-                id=lesson.cabinet.id,
-                floor=lesson.cabinet.floor,
-                name=lesson.cabinet.name,
-                tags=[tag.label for tag in lesson.cabinet.tags],
-                corpus=item.Corpus(
-                    address=lesson.corpus.address,
-                    name=lesson.corpus.name,
-                    id=lesson.corpus.id,
-                ),
-            ),
-        )
-        for lesson in lessons
-    ]
+    returned_lesson = [item.Lesson.from_orm(lesson) for lesson in lessons]
     return info.LessonsForDay(day_of_week=day_of_week, lessons=returned_lesson)
 
 
@@ -120,8 +83,8 @@ async def get_lesson_for_range(
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
     session=Depends(get_session),
-    _=Depends(lessons_allowed),
-) -> info.LessonsForRange:
+    _=Depends(allowed),
+):
     if teacher_id is not None and subclass_id is not None:
         raise HTTPException(
             status_code=422, detail="You must specify a subclass_id or a teacher_id"
@@ -163,58 +126,17 @@ async def get_lesson_for_range(
 
     lessons = sorted(lessons, key=lambda x: x.lesson_number.number)
 
-    returned_lesson: Dict[int, Any] = {}
+    returned_lesson: Dict[int, Any] = defaultdict(list)
 
     for lesson in lessons:
-        returned_lesson[lesson.day_of_week] = returned_lesson.get(
-            lesson.day_of_week, []
-        ) + [
-            item.Lesson(
-                id=lesson.id,
-                lesson_number=item.LessonNumber(
-                    id=lesson.lesson_number.id,
-                    number=lesson.lesson_number.number,
-                    time_start=lesson.lesson_number.time_start,
-                    time_end=lesson.lesson_number.time_end,
-                ),
-                day_of_week=lesson.day_of_week,
-                subject=lesson.subject,
-                teacher=item.Teacher(
-                    name=lesson.teacher.name,
-                    id=lesson.teacher.id,
-                    tags=[tag.label for tag in lesson.teacher.tags],
-                ),
-                subclasses=[
-                    item.Subclass(
-                        id=subclass.id,
-                        educational_level=subclass.educational_level,
-                        identificator=subclass.identificator,
-                        additional_identificator=subclass.additional_identificator,
-                    )
-                    for subclass in lesson.subclasses
-                ],
-                cabinet=item.Cabinet(
-                    floor=lesson.cabinet.floor,
-                    name=lesson.cabinet.name,
-                    id=lesson.cabinet.id,
-                    tags=[tag.label for tag in lesson.cabinet.tags],
-                    corpus=item.Corpus(
-                        id=lesson.corpus.id,
-                        address=lesson.corpus.address,
-                        name=lesson.corpus.name,
-                    ),
-                ),
-            )
-        ]
+        returned_lesson[lesson.day_of_week].append(item.Lesson.from_orm(lesson))
 
     days = sorted(returned_lesson.keys())
 
     return info.LessonsForRange(
         data=[
-            info.LessonsForDay(
-                day_of_week=day_of_week, lessons=returned_lesson[day_of_week]
-            )
-            for day_of_week in days
+            info.LessonsForDay(day_of_week=day, lessons=returned_lesson[day])
+            for day in days
         ]
     )
 
@@ -227,8 +149,8 @@ async def get_certain_lesson(
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
     session=Depends(get_session),
-    _=Depends(lessons_allowed),
-) -> item.Lesson:
+    _=Depends(allowed),
+):
     if teacher_id is not None and subclass_id is not None:
         raise HTTPException(
             status_code=422, detail="You must specify a subclass_id or a teacher_id"
@@ -282,39 +204,4 @@ async def get_certain_lesson(
             status_code=422,
             detail=f"Lesson with params {day_of_week=} {lesson_number.number=} {(teacher_id, subclass_id)=} {school_id=} does not exist",
         )
-    return item.Lesson(
-        id=lesson.id,
-        lesson_number=item.LessonNumber(
-            id=lesson.lesson_number.id,
-            number=lesson.lesson_number.number,
-            time_start=lesson.lesson_number.time_start,
-            time_end=lesson.lesson_number.time_end,
-        ),
-        day_of_week=lesson.day_of_week,
-        subject=lesson.subject,
-        cabinet=item.Cabinet(
-            name=lesson.cabinet.name,
-            floor=lesson.cabinet.floor,
-            id=lesson.cabinet.id,
-            tags=[tag.label for tag in lesson.cabinet.tags],
-            corpus=item.Corpus(
-                name=lesson.corpus.name,
-                address=lesson.corpus.address,
-                id=lesson.corpus.id,
-            ),
-        ),
-        teacher=item.Teacher(
-            name=lesson.teacher.name,
-            id=lesson.teacher.id,
-            tags=[tag.label for tag in lesson.teacher.tags],
-        ),
-        subclasses=[
-            item.Subclass(
-                id=subclass.id,
-                educational_level=subclass.educational_level,
-                identificator=subclass.identificator,
-                additional_identificator=subclass.additional_identificator,
-            )
-            for subclass in lesson.subclasses
-        ],
-    )
+    return item.Lesson.from_orm(lesson)

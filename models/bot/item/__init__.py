@@ -10,3 +10,4 @@ from models.bot.item.result import Result
 from models.bot.item.school import School
 from models.bot.item.subclass import Subclass
 from models.bot.item.teacher import Teacher
+from models.bot.item.tag import Tag

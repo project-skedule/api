@@ -20,26 +20,24 @@ router = APIRouter(
 )
 logger.info(f"Cabinet router created on {API_PREFIX+API_CABINET_PREFIX}")
 
-cabinets_allowed = AllowLevels(Access.Admin, Access.Parser)
+allowed = AllowLevels(Access.Admin, Access.Parser)
 
 
-@router.post("/new", tags=[CABINET, WEBSITE], response_model=outgoing.Cabinet)
+@router.post("/new", tags=[CABINET], response_model=outgoing.Cabinet)
 async def create_new_cabinet(
-    request: incoming.Cabinet,
-    session=Depends(get_session),
-    _=Depends(cabinets_allowed),
+    request: incoming.Cabinet, session=Depends(get_session), _=Depends(allowed)
 ) -> outgoing.Cabinet:
     corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
     school = db_validated.get_school_by_id(session, corpus.school_id)
     logger.debug(
         f"Searching cabinet with name {request.name} and corpus_id {request.corpus_id}"
     )
-    check_unique = (
+    candidate = (
         session.query(database.Cabinet)
         .filter_by(name=request.name, corpus_id=request.corpus_id)
-        .all()
+        .first()
     )
-    if check_unique:
+    if candidate:
         logger.debug(
             f"Raised an expection because the cabinet with name {request.name} already exists in corpus with id {request.corpus_id}"
         )
@@ -64,14 +62,12 @@ async def create_new_cabinet(
     session.add(school)
     session.commit()
     logger.debug(f"Cabinet with name {cabinet.name} acquired id {cabinet.id}")
-    return outgoing.Cabinet(id=cabinet.id)
+    return outgoing.Cabinet.from_orm(cabinet)
 
 
-@router.put("/update", tags=[CABINET, WEBSITE], response_model=outgoing.Cabinet)
+@router.put("/update", tags=[CABINET], response_model=outgoing.Cabinet)
 async def update_cabinet(
-    request: updating.Cabinet,
-    session=Depends(get_session),
-    _=Depends(cabinets_allowed),
+    request: updating.Cabinet, session=Depends(get_session), _=Depends(allowed)
 ):
     cabinet = db_validated.get_cabinet_by_id(session, request.cabinet_id)
 
@@ -82,12 +78,12 @@ async def update_cabinet(
         logger.debug(
             f"Searching cabinet with name {request.name} and corpus_id {cabinet.corpus_id}"
         )
-        check_unique = (
+        candidate = (
             session.query(database.Cabinet)
             .filter_by(name=request.name, corpus_id=cabinet.corpus_id)
             .first()
         )
-        if check_unique is not None:
+        if candidate is not None:
             logger.debug(
                 f"Raised an expection because the cabinet with name {request.name} already exists in corpus with id {cabinet.corpus_id}"
             )
@@ -103,4 +99,4 @@ async def update_cabinet(
     session.add(cabinet)
     session.commit()
 
-    return outgoing.Cabinet(id=cabinet.id)
+    return outgoing.Cabinet.from_orm(cabinet)

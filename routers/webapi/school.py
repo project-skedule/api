@@ -20,18 +20,16 @@ router = APIRouter(
 )
 logger.info(f"School router created on {API_PREFIX+API_SCHOOL_PREFIX}")
 
-school_allowed = AllowLevels(Access.Admin, Access.Parser)
+allowed = AllowLevels(Access.Admin, Access.Parser)
 
 
-@router.post("/new", tags=[SCHOOL, WEBSITE], response_model=outgoing.School)
+@router.post("/new", tags=[SCHOOL], response_model=outgoing.School)
 async def create_new_school(
-    school: incoming.School,
-    session=Depends(get_session),
-    _=Depends(school_allowed),
-) -> outgoing.School:
+    school: incoming.School, session=Depends(get_session), _=Depends(allowed)
+):
     logger.debug(f'Searching school with name "{school.name}"')
-    check_unique = session.query(database.School).filter_by(name=school.name).all()
-    if check_unique != []:
+    candidate = session.query(database.School).filter_by(name=school.name).first()
+    if candidate:
         logger.debug(
             "Raised an exception because school with the same name is already exists"
         )
@@ -44,23 +42,19 @@ async def create_new_school(
     session.add(school)
     session.commit()
     logger.debug(f"School acquired id {school.id}")
-    return outgoing.School(id=school.id)
+    return outgoing.School.from_orm(school)
 
 
 @router.put("/update", tags=[SCHOOL, WEBSITE], response_model=outgoing.School)
 async def update_school(
-    request: updating.School,
-    session=Depends(get_session),
-    _=Depends(school_allowed),
+    request: updating.School, session=Depends(get_session), _=Depends(allowed)
 ):
     school = db_validated.get_school_by_id(session, request.school_id)
 
     if request.name is not None:
         logger.debug(f'Searching school with name "{request.name}"')
-        check_unique = (
-            session.query(database.School).filter_by(name=request.name).first()
-        )
-        if check_unique is not None:
+        candidate = session.query(database.School).filter_by(name=request.name).first()
+        if candidate:
             logger.debug(
                 "Raised an exception because school with the same name is already exists"
             )
@@ -73,4 +67,4 @@ async def update_school(
     session.add(school)
     session.commit()
 
-    return outgoing.School(id=school.id)
+    return outgoing.School.from_orm(school)

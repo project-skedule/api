@@ -20,25 +20,23 @@ router = APIRouter(
 )
 logger.info(f"Teacher router created on {API_PREFIX+API_TEACHER_PREFIX}")
 
-teacher_allow = AllowLevels(Access.Admin, Access.Parser)
+allowed = AllowLevels(Access.Admin, Access.Parser)
 
 
-@router.post("/new", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
+@router.post("/new", tags=[TEACHER], response_model=outgoing.Teacher)
 async def create_new_teacher(
-    request: incoming.Teacher,
-    session=Depends(get_session),
-    _=Depends(teacher_allow),
-) -> outgoing.Teacher:
+    request: incoming.Teacher, session=Depends(get_session), _=Depends(allowed)
+):
     school = db_validated.get_school_by_id(session, request.school_id)
     logger.debug(
         f"Searching teacher with name {request.name} in school with id {request.school_id}"
     )
-    check_unique = (
+    candidate = (
         session.query(database.Teacher)
         .filter_by(name=request.name, school_id=request.school_id)
-        .all()
+        .first()
     )
-    if check_unique:
+    if candidate:
         logger.debug(
             f"Raise an expection because the teacher with name {request.name} already exists in school with id {school.id}"
         )
@@ -58,24 +56,22 @@ async def create_new_teacher(
     session.add(school)
     session.commit()
     logger.debug(f"Teacher with name {teacher.name} acquired id {teacher.id}")
-    return outgoing.Teacher(id=teacher.id)
+    return outgoing.Teacher.from_orm(teacher)
 
 
-@router.put("/update", tags=[TEACHER, WEBSITE], response_model=outgoing.Teacher)
+@router.put("/update", tags=[TEACHER], response_model=outgoing.Teacher)
 async def update_teacher(
-    request: updating.Teacher,
-    session=Depends(get_session),
-    _=Depends(teacher_allow),
+    request: updating.Teacher, session=Depends(get_session), _=Depends(allowed)
 ):
     teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
 
     if request.name is not None:
-        check_unique = (
+        candidate = (
             session.query(database.Teacher)
             .filter_by(name=request.name, school_id=teacher.school_id)
             .first()
         )
-        if check_unique is not None:
+        if candidate:
             logger.debug(
                 f"Raise an expection because the teacher with name {request.name} already exists in school with id {teacher.school_id}"
             )
@@ -90,4 +86,4 @@ async def update_teacher(
     session.add(teacher)
     session.commit()
 
-    return outgoing.Teacher(id=teacher.id)
+    return outgoing.Teacher.from_orm(teacher)

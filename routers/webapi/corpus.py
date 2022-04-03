@@ -20,44 +20,29 @@ router = APIRouter(
 )
 logger.info(f"Corpus router created on {API_PREFIX+API_CORPUS_PREFIX}")
 
-corpus_allowed = AllowLevels(Access.Admin, Access.Parser)
+allowed = AllowLevels(Access.Admin, Access.Parser)
 
 
-@router.post("/new", tags=[CORPUS, WEBSITE], response_model=outgoing.Corpus)
+@router.post("/new", tags=[CORPUS], response_model=outgoing.Corpus)
 async def create_new_corpus(
-    corpus: incoming.Corpus,
-    session=Depends(get_session),
-    _=Depends(corpus_allowed),
+    corpus: incoming.Corpus, session=Depends(get_session), _=Depends(allowed)
 ) -> outgoing.Corpus:
     school = db_validated.get_school_by_id(session, corpus.school_id)
     logger.debug(
         f"Searching corpus with name {corpus.name} and school_id {corpus.school_id}"
     )
-    check_unique = (
+    candidate = (
         session.query(database.Corpus)
         .filter_by(name=corpus.name, school_id=corpus.school_id)
-        .all()
+        .first()
     )
-    if check_unique:
+    if candidate:
         logger.debug(
             f"Raised an exception because the corpus with name {corpus.name} is already exists in school with id {corpus.school_id}"
         )
         raise HTTPException(
             status_code=409,
             detail=f"Corpus with name {corpus.name} is already exists",
-        )
-    check_unique = (
-        session.query(database.Corpus)
-        .filter_by(address=corpus.address, school_id=corpus.school_id)
-        .all()
-    )
-    if check_unique:
-        logger.debug(
-            f"Raised an exception because the corpus with address {corpus.address} is already exists in school with id {corpus.school_id}"
-        )
-        raise HTTPException(
-            status_code=409,
-            detail=f"Corpus with address {corpus.address} is already exists",
         )
     corpus = database.Corpus(
         name=corpus.name, address=corpus.address, canteen_text=corpus.canteen_text
@@ -70,24 +55,22 @@ async def create_new_corpus(
     session.add(school)
     session.commit()
     logger.debug(f"Corpus acquired id {corpus.id}")
-    return outgoing.Corpus(id=corpus.id)
+    return outgoing.Corpus.from_orm(corpus)
 
 
-@router.put("/update", tags=[CORPUS, WEBSITE], response_model=outgoing.Corpus)
+@router.put("/update", tags=[CORPUS], response_model=outgoing.Corpus)
 async def update_corpus(
-    request: updating.Corpus,
-    session=Depends(get_session),
-    _=Depends(corpus_allowed),
+    request: updating.Corpus, session=Depends(get_session), _=Depends(allowed)
 ):
     corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
 
     if request.address is not None:
-        check_unique = (
+        candidate = (
             session.query(database.Corpus)
             .filter_by(address=request.address, school_id=corpus.school_id)
             .first()
         )
-        if check_unique is not None:
+        if candidate is not None:
             logger.debug(
                 f"Raised an exception because the corpus with address {request.address} is already exists in school with id {corpus.school_id}"
             )
@@ -98,12 +81,12 @@ async def update_corpus(
         corpus.address = request.address
 
     if request.name is not None:
-        check_unique = (
+        candidate = (
             session.query(database.Corpus)
             .filter_by(name=request.name, school_id=corpus.school_id)
             .first()
         )
-        if check_unique is not None:
+        if candidate is not None:
             logger.debug(
                 f"Raised an exception because the corpus with name {request.name} is already exists in school with id {corpus.school_id}"
             )
@@ -119,4 +102,4 @@ async def update_corpus(
     session.add(corpus)
     session.commit()
 
-    return outgoing.Corpus(id=corpus.id)
+    return outgoing.Corpus.from_orm(corpus)

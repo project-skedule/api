@@ -6,5 +6,5 @@ from pydantic import Field
 
 
 class Parent(BaseModel):
-    parent_id: int = Field(ge=0, le=2147483647)
+    id: int = Field(ge=0, le=2147483647, alias="parent_id")
     children: List[Child]

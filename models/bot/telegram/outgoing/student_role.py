@@ -8,4 +8,4 @@ class StudentRole(BaseModel):
     id: int
     is_main_role: bool
     role_type: RoleEnum
-    data: Student = Field(alias="student")
+    student: Student = Field(alias="data")

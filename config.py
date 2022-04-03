@@ -122,3 +122,6 @@ def get_session():
 class BaseModel(PydanticBaseModel):
     class Config:
         orm_mode = True
+        allow_population_by_field_name = True
+        # use field_name as database import (from_orm)
+        # use alias as JSON export

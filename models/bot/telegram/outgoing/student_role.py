@@ -4,6 +4,7 @@ from config import BaseModel
 
 
 class StudentRole(BaseModel):
+    id: int
     is_main_role: bool
     role_type: RoleEnum
     data: Student

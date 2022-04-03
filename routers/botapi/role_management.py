@@ -36,6 +36,7 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
         if role.role_type == database.RoleEnum.STUDENT:
             roles.append(
                 outgoing.StudentRole(
+                    id=role.id,
                     is_main_role=role.is_main_role,
                     role_type=role.role_type,
                     data=outgoing.Student(
@@ -56,6 +57,7 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
         elif role.role_type == database.RoleEnum.TEACHER:
             roles.append(
                 outgoing.TeacherRole(
+                    id=role.id,
                     is_main_role=role.is_main_role,
                     role_type=role.role_type,
                     data=outgoing.Teacher(
@@ -70,6 +72,7 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
         elif role.role_type == database.RoleEnum.PARENT:
             roles.append(
                 outgoing.ParentRole(
+                    id=role.id,
                     is_main_role=role.is_main_role,
                     role_type=role.role_type,
                     data=outgoing.Parent(
@@ -95,6 +98,7 @@ def account_with_roles(account: database.Account) -> outgoing.Account:
         elif role.role_type == database.RoleEnum.ADMINISTRATION:
             roles.append(
                 outgoing.AdministrationRole(
+                    id=role.id,
                     is_main_role=role.is_main_role,
                     role_type=role.role_type,
                     data=outgoing.Administration(

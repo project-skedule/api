@@ -112,7 +112,7 @@ async def get_letters(
 ):
     school = db_validated.get_school_by_id(session, school_id)
     data = filter(lambda s: s.educational_level == educational_level, school.subclasses)
-    return info.Letters(data=set([s.identificator for s in data]))
+    return info.Letters(data=sorted(set([s.identificator for s in data])))
 
 
 @router.get("/groups/all", tags=[SUBCLASS], response_model=info.Groups)
@@ -129,7 +129,7 @@ async def get_groups(
         and s.identificator == identificator,
         school.subclasses,
     )
-    return info.Groups(data=set([s.additional_identificator for s in data]))
+    return info.Groups(data=sorted(set([s.additional_identificator for s in data])))
 
 
 @router.get("/schools/all", tags=[SCHOOL], response_model=info.Schools)

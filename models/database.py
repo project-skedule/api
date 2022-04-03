@@ -267,7 +267,6 @@ role_announcement_association = Table(
 class Announcement(Base):
     __tablename__ = "announcement"
     id = Column(Integer, **mod(0b1011))
-    school_id = Column(Integer, ForeignKey("school.id"), **mod(0b0000))
     link = Column(String(length=500), **mod(0b0000))
     title = Column(String(length=150), **mod(0b0000))
     roles = relationship(

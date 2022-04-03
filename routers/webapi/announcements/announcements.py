@@ -2,7 +2,11 @@
 
 
 from typing import List
-from routers.webapi.announcements.utils import process_announcement, send_to_transmitter
+from routers.webapi.announcements.utils import (
+    process_announcement,
+    publish_to_telegraph,
+    send_to_transmitter,
+)
 import valid_db_requests as db_validated
 from config import API_ANNOUNCEMENTS_PREFIX, API_PREFIX, MAX_HISTORY_RESULTS
 from config import DEFAULT_LOGGER as logger
@@ -75,8 +79,21 @@ async def send_to_all(
     session=Depends(get_session),
     _=Depends(AllowLevels(Access.Admin)),
 ):
-    telegram_ids = [acc.telegram_id for acc in session.query(database.Account).all()]
-    await send_to_transmitter(request.text, telegram_ids)
+    link = await publish_to_telegraph(request.title, request.text)
+    accounts = session.query(database.Account).all()
+    roles = []
+    for acc in accounts:
+        roles.extend(acc.roles)
+    announcement = database.Announcement(link=link, title=request.title)
+    for role in roles:
+        announcement.roles.append(role)
+
+    session.add(announcement)
+    session.commit()
+
+    telegram_ids = [acc.telegram_id for acc in accounts]
+
+    await send_to_transmitter(link, telegram_ids)
     return telegram_ids
 
 

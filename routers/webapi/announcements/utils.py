@@ -139,9 +139,7 @@ async def process_announcement(
     if save:
         link = await publish_to_telegraph(request.title, request.text)
         logger.info(link)
-        announcement = database.Announcement(
-            title=request.title, link=link, school_id=school.id
-        )
+        announcement = database.Announcement(title=request.title, link=link)
         for role in roles:
             announcement.roles.append(role)
 

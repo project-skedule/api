@@ -18,6 +18,7 @@ ADMINISTRATION = "#administration"
 PARENT = "#parent"
 ANNOUNCEMENTS = "#announcements"
 STATS = "#stats"
+TAG = "#tags"
 
 
 def get_tags(session: Session, request: List[str]) -> List[database.Tag]:

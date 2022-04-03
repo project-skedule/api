@@ -22,6 +22,7 @@ from extra.tags import (
     TEACHER,
     TELEGRAM,
     WEBSITE,
+    TAG,
 )
 from fastapi import APIRouter, Depends, HTTPException
 from models import database
@@ -29,7 +30,7 @@ from models.bot import incoming, info, item, telegram
 from pydantic import Field
 from typing_extensions import Annotated
 
-info_allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
+allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_INFO_PREFIX,
@@ -39,88 +40,41 @@ router = APIRouter(
 logger.info(f"Info router created on {API_PREFIX+API_INFO_PREFIX}")
 
 
-@router.get(
-    "/subclasses/all",
-    tags=[INFO, SUBCLASS, WEBSITE, TELEGRAM],
-    response_model=info.Subclasses,
-)
+@router.get("/subclasses/all", tags=[SUBCLASS], response_model=info.Subclasses)
 async def get_subclasses(
-    school_id: ID,
-    session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Subclasses:
-    school = db_validated.get_school_by_id(session, school_id)
-    return info.Subclasses(
-        data=[
-            item.Subclass(
-                id=subclass.id,
-                educational_level=subclass.educational_level,
-                identificator=subclass.identificator,
-                additional_identificator=subclass.additional_identificator,
-            )
-            for subclass in school.subclasses
-        ]
-    )
-
-
-@router.get(
-    "/tags/all",
-    tags=[INFO, TEACHER, WEBSITE, TELEGRAM],
-    response_model=info.Tags,
-)
-async def get_all_tags(
-    session=Depends(get_session),
-    _=Depends(info_allowed),
+    school_id: ID, session=Depends(get_session), _=Depends(allowed)
 ):
-    return info.Tags(data=[tag.label for tag in session.query(database.Tag).all()])
-
-
-@router.get(
-    "/teachers/all",
-    tags=[INFO, TEACHER, WEBSITE, TELEGRAM],
-    response_model=info.Teachers,
-)
-async def get_teachers(
-    school_id: ID,
-    session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Teachers:
     school = db_validated.get_school_by_id(session, school_id)
-    return info.Teachers(
-        data=[
-            item.Teacher(
-                name=teacher.name,
-                id=teacher.id,
-                tags=[tag.label for tag in teacher.tags],
-            )
-            for teacher in school.teachers
-        ]
-    )
+    return info.Subclasses(data=[item.Subclass.from_orm(s) for s in school.subclasses])
 
 
-@router.get(
-    "/parallels/all",
-    tags=[INFO, SUBCLASS, WEBSITE, TELEGRAM],
-    response_model=info.Parallels,
-)
+@router.get("/tags/all", tags=[TAG], response_model=info.Tags)
+async def get_all_tags(session=Depends(get_session), _=Depends(allowed)):
+    tags = session.query(database.Tag).all()
+    return info.Tags(data=[item.Tag.from_orm(t) for t in tags])
+
+
+@router.get("/teachers/all", tags=[TEACHER], response_model=info.Teachers)
+async def get_teachers(school_id: ID, session=Depends(get_session), _=Depends(allowed)):
+    school = db_validated.get_school_by_id(session, school_id)
+    return info.Teachers(data=[item.Teacher.from_orm(t) for t in school.teachers])
+
+
+@router.get("/parallels/all", tags=[SUBCLASS], response_model=info.Parallels)
 async def get_parallels(
-    school_id: ID,
-    session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Parallels:
+    school_id: ID, session=Depends(get_session), _=Depends(allowed)
+):
     school = db_validated.get_school_by_id(session, school_id)
     return info.Parallels(data=list({i.educational_level for i in school.subclasses}))
 
 
-@router.get(
-    "/teachers/distance", tags=[INFO, TEACHER, TELEGRAM], response_model=info.Teachers
-)
+@router.get("/teachers/distance", tags=[TEACHER], response_model=info.Teachers)
 async def get_teacher_by_levenshtein(
     school_id: ID,
     name: Annotated[str, Field(max_length=200, min_length=1)],
     session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Teachers:
+    _=Depends(allowed),
+):
     school = db_validated.get_school_by_id(session, school_id)
     name = name.lower()
     teachers = list(school.teachers)
@@ -134,377 +88,161 @@ async def get_teacher_by_levenshtein(
         )
     )
     teachers = teachers[:MAX_LEVENSHTEIN_RESULTS]
-    return info.Teachers(
-        data=[
-            item.Teacher(
-                name=teacher.name,
-                id=teacher.id,
-                tags=[tag.label for tag in teacher.tags],
-            )
-            for teacher in teachers
-        ]
-    )
+    return info.Teachers(data=[item.Teacher.from_orm(teacher) for teacher in teachers])
 
 
-@router.get(
-    "/teachers/tag", tags=[INFO, TEACHER, TELEGRAM], response_model=info.Teachers
-)
-async def get_teachers_by_tag(
-    school_id: ID,
-    tag: str,
-    session=Depends(get_session),
-):
-    tag = session.query(database.Tag).filter_by(label=tag).first()
-    if not tag:
-        raise HTTPException(status_code=404, detail="No such tag")
-
+@router.get("/teachers/tag", tags=[TAG], response_model=info.Teachers)
+async def get_teachers_by_tag(school_id: ID, tag: str, session=Depends(get_session)):
+    tag = db_validated.get_tag_by_label(session, tag)
     teachers = (
         session.query(database.Teacher)
         .filter_by(school_id=school_id)
         .filter(database.Teacher.tags.contains(tag))
         .all()
     )
-    logger.info(list(teachers))
-    return info.Teachers(
-        data=[
-            item.Teacher(
-                name=teacher.name,
-                id=teacher.id,
-                tags=[tag.label for tag in teacher.tags],
-            )
-            for teacher in teachers
-        ]
-    )
+    return info.Teachers(data=[item.Teacher.from_orm(teacher) for teacher in teachers])
 
 
-@router.get(
-    "/letters/all",
-    tags=[INFO, SUBCLASS, WEBSITE, TELEGRAM],
-    response_model=info.Letters,
-)
+@router.get("/letters/all", tags=[SUBCLASS], response_model=info.Letters)
 async def get_letters(
     school_id: ID,
     educational_level: Annotated[int, Field(ge=0, le=12)],
     session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Letters:
+    _=Depends(allowed),
+):
     school = db_validated.get_school_by_id(session, school_id)
-    data = []
-    for i in school.subclasses:
-        if i.educational_level == educational_level:
-            l = i.identificator
-            if l not in data:
-                data.append(l)
-    return info.Letters(data=data)
+    data = filter(lambda s: s.educational_level == educational_level, school.subclasses)
+    return info.Letters(data=set([s.identificator for s in data]))
 
 
-@router.get(
-    "/groups/all",
-    tags=[INFO, SUBCLASS, WEBSITE, TELEGRAM],
-    response_model=info.Groups,
-)
+@router.get("/groups/all", tags=[SUBCLASS], response_model=info.Groups)
 async def get_groups(
     school_id: ID,
     educational_level: Annotated[int, Field(ge=0, le=12)],
     identificator: Annotated[str, Field(max_length=50)],
     session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Groups:
+    _=Depends(allowed),
+):
     school = db_validated.get_school_by_id(session, school_id)
-    data = []
-    for i in school.subclasses:
-        if (
-            i.educational_level == educational_level
-            and i.identificator == identificator
-        ):
-            g = i.additional_identificator
-            if g not in data:
-                data.append(g)
-
-    return info.Groups(data=data)
+    data = filter(
+        lambda s: s.educational_level == educational_level
+        and s.identificator == identificator,
+        school.subclasses,
+    )
+    return info.Groups(data=set([s.additional_identificator for s in data]))
 
 
-@router.get(
-    "/schools/all",
-    tags=[INFO, SCHOOL, WEBSITE, TELEGRAM],
-    response_model=info.Schools,
-)
-async def get_school(
-    session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Schools:
+@router.get("/schools/all", tags=[SCHOOL], response_model=info.Schools)
+async def get_school(session=Depends(get_session), _=Depends(allowed)):
     schools = session.query(database.School).all()
-    return info.Schools(
-        data=[item.School(name=school.name, id=school.id) for school in schools]
-    )
+    return info.Schools(data=[item.School.from_orm(school) for school in schools])
 
 
-@router.get(
-    "/corpuses/all",
-    tags=[INFO, CORPUS, WEBSITE, TELEGRAM],
-    response_model=info.Corpuses,
-)
-async def get_corpuses(
-    school_id: ID,
-    session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Corpuses:
+@router.get("/corpuses/all", tags=[CORPUS], response_model=info.Corpuses)
+async def get_corpuses(school_id: ID, session=Depends(get_session), _=Depends(allowed)):
     school = db_validated.get_school_by_id(session, school_id)
-    return info.Corpuses(
-        data=[
-            item.Corpus(name=corpus.name, address=corpus.address, id=corpus.id)
-            for corpus in school.corpuses
-        ]
-    )
+    return info.Corpuses(data=[item.Corpus.from_orm(c) for c in school.corpuses])
 
 
-@router.get(
-    "/schools/distance",
-    tags=[INFO, SCHOOL, TELEGRAM],
-    response_model=info.Schools,
-)
+@router.get("/schools/distance", tags=[SCHOOL], response_model=info.Schools)
 async def get_schools_by_levenshtein(
     name: Annotated[str, Field(max_length=200, min_length=1)],
     session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Schools:
+    _=Depends(allowed),
+):
     schools = (
         session.query(database.School)
         .filter(database.School.name.contains(name))
         .limit(MAX_LEVENSHTEIN_RESULTS)
         .all()
     )
-    return info.Schools(
-        data=[item.School(name=school.name, id=school.id) for school in schools]
-    )
+    return info.Schools(data=[item.School.from_orm(school) for school in schools])
 
 
-@router.get(
-    "/cabinets/all", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
-)
-async def get_cabinets(
-    school_id: ID,
-    session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Cabinets:
+@router.get("/cabinets/all", tags=[CABINET], response_model=info.Cabinets)
+async def get_cabinets(school_id: ID, session=Depends(get_session), _=Depends(allowed)):
     school = db_validated.get_school_by_id(session, school_id)
-    return info.Cabinets(
-        data=[
-            item.Cabinet(
-                name=cabinet.name,
-                floor=cabinet.floor,
-                id=cabinet.id,
-                tags=[tag.label for tag in cabinet.tags],
-                corpus=item.Corpus(
-                    address=cabinet.corpus.address,
-                    name=cabinet.corpus.name,
-                    id=cabinet.corpus.id,
-                ),
-            )
-            for cabinet in school.cabinets
-        ]
-    )
+    return info.Cabinets(data=[item.Cabinet.from_orm(c) for c in school.cabinets])
 
 
-@router.get(
-    "/cabinets/tag", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
-)
-async def get_cabinets_by_tag(
-    school_id: ID,
-    tag: str,
-    session=Depends(get_session),
-):
-    tag = session.query(database.Tag).filter_by(label=tag).first()
-    if not tag:
-        raise HTTPException(status_code=404, detail="No such tag")
+@router.get("/cabinets/tag", tags=[TAG], response_model=info.Cabinets)
+async def get_cabinets_by_tag(school_id: ID, tag: str, session=Depends(get_session)):
+    tag = db_validated.get_tag_by_label(tag)
     cabinets = (
         session.query(database.Cabinet)
         .filter_by(school_id=school_id)
         .filter(database.Cabinet.tags.contains(tag))
         .all()
     )
-    return info.Cabinets(
-        data=[
-            item.Cabinet(
-                name=cabinet.name,
-                floor=cabinet.floor,
-                id=cabinet.id,
-                tags=[tag.label for tag in cabinet.tags],
-                corpus=item.Corpus(
-                    address=cabinet.corpus.address,
-                    name=cabinet.corpus.name,
-                    id=cabinet.corpus.id,
-                ),
-            )
-            for cabinet in cabinets
-        ]
-    )
+    return info.Cabinets(data=[item.Cabinet.from_orm(cabinet) for cabinet in cabinets])
 
 
-@router.get("/lessons/all", tags=[INFO, LESSON, TELEGRAM], response_model=info.Lessons)
-async def get_lessons(
-    school_id: ID,
-    session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Lessons:
+@router.get("/lessons/all", tags=[LESSON], response_model=info.Lessons)
+async def get_lessons(school_id: ID, session=Depends(get_session), _=Depends(allowed)):
     school = db_validated.get_school_by_id(session, school_id)
-    return info.Lessons(
-        data=[
-            item.Lesson(
-                id=lesson.id,
-                lesson_number=item.LessonNumber(
-                    id=lesson.lesson_number.id,
-                    number=lesson.lesson_number.number,
-                    time_start=lesson.lesson_number.time_start,
-                    time_end=lesson.lesson_number.time_end,
-                ),
-                subject=lesson.subject,
-                teacher=item.Teacher(
-                    name=lesson.teacher.name,
-                    id=lesson.teacher.id,
-                    tags=[tag.label for tag in lesson.teacher.tags],
-                ),
-                day_of_week=lesson.day_of_week,
-                subclasses=[
-                    item.Subclass(
-                        id=subclass.id,
-                        educational_level=subclass.educational_level,
-                        identificator=subclass.identificator,
-                        additional_identificator=subclass.additional_identificator,
-                    )
-                    for subclass in lesson.subclasses
-                ],
-                cabinet=item.Cabinet(
-                    id=lesson.cabinet.id,
-                    floor=lesson.cabinet.floor,
-                    name=lesson.cabinet.name,
-                    tags=[tag.label for tag in lesson.cabinet.tags],
-                    corpus=item.Corpus(
-                        address=lesson.corpus.address,
-                        name=lesson.corpus.name,
-                        id=lesson.corpus.id,
-                    ),
-                ),
-                school=item.School(
-                    name=lesson.school.name,
-                    id=lesson.school.id,
-                ),
-            )
-            for lesson in session.query(database.Lesson)
-            .filter_by(school_id=school.id)
-            .all()
-        ]
-    )
+    return info.Lessons(data=[item.Lesson.from_orm(l) for l in school.lessons])
 
 
 @router.get(
-    "/lessontimetables/all",
-    tags=[INFO, LESSON_NUMBER, TELEGRAM],
-    response_model=info.LessonNumbers,
+    "/lessontimetables/all", tags=[LESSON_NUMBER], response_model=info.LessonNumbers
 )
 async def get_all_timetables(
-    school_id: ID,
-    session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.LessonNumbers:
+    school_id: ID, session=Depends(get_session), _=Depends(allowed)
+):
     school = db_validated.get_school_by_id(session, school_id)
-    timetables = (
-        session.query(database.Lesson_number).filter_by(school_id=school.id).all()
-    )
     return info.LessonNumbers(
-        data=[
-            item.LessonNumber(
-                id=lesson_number.id,
-                number=lesson_number.number,
-                time_start=lesson_number.time_start,
-                time_end=lesson_number.time_end,
-            )
-            for lesson_number in timetables
-        ]
+        data=[item.LessonNumber.from_orm(ln) for ln in school.lesson_numbers]
     )
 
 
-@router.get(
-    "/cabinets/free", tags=[INFO, CABINET, TELEGRAM], response_model=info.Cabinets
-)
+@router.get("/cabinets/free", tags=[CABINET], response_model=info.Cabinets)
 async def get_free_cabinet(
     corpus_id: ID,
     day_of_week: Annotated[int, Field(ge=1, le=7)],
     lesson_number: Optional[Annotated[int, Field(ge=0, le=20)]] = None,
     floor: Optional[Annotated[int, Field(ge=-10, le=100)]] = None,
     session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Cabinets:
+    _=Depends(allowed),
+):
     corpus = db_validated.get_corpus_by_id(session, corpus_id)
-
-    cabinets = session.query(database.Cabinet).filter_by(corpus_id=corpus.id)
+    cabinet_query = session.query(database.Cabinet).filter_by(corpus_id=corpus.id)
 
     if floor is not None:
-        cabinets = cabinets.filter_by(floor=floor)
-    cabinets = cabinets.all()
+        cabinet_query = cabinet_query.filter_by(floor=floor)
+    cabinets = cabinet_query.all()
 
     cabinets_ids = {cabinet.id for cabinet in cabinets}
 
-    lessons = (
-        session.query(database.Lesson)
-        .filter_by(corpus_id=corpus.id, day_of_week=day_of_week)
-        .all()
+    lesson_query = session.query(database.Lesson).filter_by(
+        corpus_id=corpus.id, day_of_week=day_of_week
     )
 
     if lesson_number is not None:
-        lessons = filter(
-            lambda lesson: lesson.lesson_number.number == lesson_number,
-            lessons,
-        )
-    lessons = list(lessons)
-
+        lesson_query = lesson_query.join(
+            (database.Lesson_number, database.Lesson.lesson_number)
+        ).filter(database.Lesson_number.number == lesson_number)
+    lessons = lesson_query.all()
     for lesson in lessons:
         cabinets_ids.discard(lesson.cabinet_id)
-
-    cabinets = [cabinet for cabinet in cabinets if cabinet.id in cabinets_ids]
-
-    return info.Cabinets(
-        data=[
-            item.Cabinet(
-                id=cabinet.id,
-                floor=cabinet.floor,
-                name=cabinet.name,
-                tags=[tag.label for tag in cabinet.tags],
-                corpus=item.Corpus(
-                    address=cabinet.corpus.address,
-                    name=cabinet.corpus.name,
-                    id=cabinet.corpus.id,
-                ),
-            )
-            for cabinet in cabinets
-        ]
-    )
+    cabinets = filter(lambda c: c.id in cabinets_ids, cabinets)
+    return info.Cabinets(data=[item.Cabinet.from_orm(cabinet) for cabinet in cabinets])
 
 
-@router.get("/corpus/canteen", tags=[CORPUS, TELEGRAM], response_model=info.Canteen)
+@router.get("/corpus/canteen", tags=[CORPUS], response_model=info.Canteen)
 async def get_canteen_text(
-    corpus_id: ID,
-    session=Depends(get_session),
-    _=Depends(info_allowed),
-) -> info.Canteen:
-    corpus = db_validated.get_corpus_by_id(session, corpus_id)
-
-    if corpus.canteen_text is None:
-        text = "Ваша школа не предоставила расписание столовой для этого корпуса"
-    else:
-        text = corpus.canteen_text
-
-    return info.Canteen(data=text)
+    corpus_id: ID, session=Depends(get_session), _=Depends(allowed)
+):
+    return info.Canteen.from_orm(db_validated.get_corpus_by_id(session, corpus_id))
 
 
-@router.get("/subclass/params", tags=[SUBCLASS, TELEGRAM], response_model=item.Subclass)
+@router.get("/subclass/params", tags=[SUBCLASS], response_model=item.Subclass)
 async def get_subclass_by_params(
     school_id: ID,
     educational_level: Annotated[int, Field(ge=0, le=12)],
     identificator: Annotated[str, Field(max_length=50)],
     additional_identificator: Annotated[str, Field(max_length=50)],
     session=Depends(get_session),
-    _=Depends(info_allowed),
+    _=Depends(allowed),
 ) -> item.Subclass:
     school = db_validated.get_school_by_id(session, school_id)
     subclass = db_validated.get_subclass_by_params(
@@ -514,12 +252,7 @@ async def get_subclass_by_params(
         identificator,
         additional_identificator,
     )
-    return item.Subclass(
-        educational_level=subclass.educational_level,
-        identificator=subclass.identificator,
-        additional_identificator=subclass.additional_identificator,
-        id=subclass.id,
-    )
+    return item.Subclass.from_orm(subclass)
 
 
 @router.get("/check/telegramid", tags=[TELEGRAM], response_model=item.Result)
@@ -527,16 +260,13 @@ async def check_existence(
     telegram_id: TID,
     session=Depends(get_session),
     _=Depends(AllowLevels(Access.Admin, Access.Telegram)),
-) -> item.Result:
+):
     account = session.query(database.Account).filter_by(telegram_id=telegram_id).first()
-    if account is None:
-        return item.Result(data=False)
-    return item.Result(data=True)
+    return item.Result(data=account is not None)
 
 
 @router.get("/telegramid/all", tags=[TELEGRAM], response_model=List[int])
 async def get_all_users(
-    session=Depends(get_session),
-    _=Depends(AllowLevels(Access.Admin)),
-) -> List[int]:
+    session=Depends(get_session), _=Depends(AllowLevels(Access.Admin))
+):
     return [acc.telegram_id for acc in session.query(database.Account).all()]

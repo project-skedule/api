@@ -20,20 +20,18 @@ router = APIRouter(
 )
 logger.info(f"Subclass fouter created on {API_PREFIX + API_SUBCLASS_PREFIX}")
 
-subclass_allow = AllowLevels(Access.Admin, Access.Parser)
+allowed = AllowLevels(Access.Admin, Access.Parser)
 
 
-@router.post("/new", tags=[SUBCLASS, WEBSITE], response_model=outgoing.Subclass)
+@router.post("/new", tags=[SUBCLASS], response_model=outgoing.Subclass)
 async def create_new_subclass(
-    subclass: incoming.Subclass,
-    _=Depends(subclass_allow),
-    session=Depends(get_session),
-) -> outgoing.Subclass:
+    subclass: incoming.Subclass, _=Depends(allowed), session=Depends(get_session)
+):
     school = db_validated.get_school_by_id(session, subclass.school_id)
     logger.info(
         f"Adding subclass '{subclass.educational_level}{subclass.identificator}{subclass.additional_identificator}' to school '{school.name}' "
     )
-    check_unique = (
+    candidate = (
         session.query(database.Subclass)
         .filter_by(
             educational_level=subclass.educational_level,
@@ -41,9 +39,9 @@ async def create_new_subclass(
             additional_identificator=subclass.additional_identificator,
             school_id=subclass.school_id,
         )
-        .all()
+        .first()
     )
-    if check_unique != []:
+    if candidate:
         logger.debug(
             f"Raised an exception because subclass with identificators {subclass.educational_level} {subclass.identificator} {subclass.additional_identificator} is already exists"
         )
@@ -61,19 +59,17 @@ async def create_new_subclass(
     session.add(school)
     session.commit()
     logger.debug(f"Subclass acquired id {subclass.id}")
-    return outgoing.Subclass(id=subclass.id)
+    return outgoing.Subclass.from_orm(subclass)
 
 
-@router.put("/update", tags=[SUBCLASS, WEBSITE], response_model=outgoing.Subclass)
+@router.put("/update", tags=[SUBCLASS], response_model=outgoing.Subclass)
 async def update_subclass(
-    request: updating.Subclass,
-    _=Depends(subclass_allow),
-    session=Depends(get_session),
+    request: updating.Subclass, _=Depends(allowed), session=Depends(get_session)
 ):
     subclass = db_validated.get_subclass_by_id(session, request.subclass_id)
 
     if request.educational_level is not None:
-        check_unique = (
+        candidate = (
             session.query(database.Subclass)
             .filter_by(
                 educational_level=request.educational_level,
@@ -83,7 +79,7 @@ async def update_subclass(
             )
             .first()
         )
-        if check_unique is not None:
+        if candidate is not None:
             logger.debug(
                 f"Raised an exception because subclass with identificators {request.educational_level} {subclass.identificator} {subclass.additional_identificator} is already exists"
             )
@@ -94,7 +90,7 @@ async def update_subclass(
         subclass.educational_level = request.educational_level
 
     if request.identificator is not None:
-        check_unique = (
+        candidate = (
             session.query(database.Subclass)
             .filter_by(
                 educational_level=subclass.educational_level,
@@ -102,9 +98,9 @@ async def update_subclass(
                 additional_identificator=subclass.additional_identificator,
                 school_id=subclass.school_id,
             )
-            .all()
+            .first()
         )
-        if check_unique != []:
+        if candidate:
             logger.debug(
                 f"Raised an exception because subclass with identificators {subclass.educational_level} {request.identificator} {subclass.additional_identificator} is already exists"
             )
@@ -115,7 +111,7 @@ async def update_subclass(
         subclass.identificator = request.identificator
 
     if request.additional_identificator is not None:
-        check_unique = (
+        candidate = (
             session.query(database.Subclass)
             .filter_by(
                 educational_level=subclass.educational_level,
@@ -125,7 +121,7 @@ async def update_subclass(
             )
             .all()
         )
-        if check_unique != []:
+        if candidate != []:
             logger.debug(
                 f"Raised an exception because subclass with identificators {subclass.educational_level} {subclass.identificator} {request.additional_identificator} is already exists"
             )
@@ -138,4 +134,4 @@ async def update_subclass(
     session.add(subclass)
     session.commit()
 
-    return outgoing.Subclass(id=subclass.id)
+    return outgoing.Subclass.from_orm(subclass)

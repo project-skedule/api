@@ -10,12 +10,11 @@ from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
 from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
-from extra.service_auth import AllowLevels, get_current_service
+from extra.service_auth import AllowLevels
 from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER, TELEGRAM
 from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.bot import incoming as bot_incoming
-from models.bot import item
 from models.bot.telegram import incoming, outgoing
 
 router = APIRouter(
@@ -27,112 +26,18 @@ logger.info(
     f"Role management router created on {API_PREFIX+API_ROLE_MANAGEMENT_PREFIX}"
 )
 
-management_allowed = AllowLevels(Access.Admin, Access.Telegram)
-
-
-def account_with_roles(account: database.Account) -> outgoing.Account:
-    roles: List[outgoing.Role] = []
-    for role in account.roles:
-        if role.role_type == database.RoleEnum.STUDENT:
-            roles.append(
-                outgoing.StudentRole(
-                    id=role.id,
-                    is_main_role=role.is_main_role,
-                    role_type=role.role_type,
-                    data=outgoing.Student(
-                        subclass_id=role.student.subclass.id,
-                        subclass=item.Subclass(
-                            id=role.student.subclass.id,
-                            educational_level=role.student.subclass.educational_level,
-                            identificator=role.student.subclass.identificator,
-                            additional_identificator=role.student.subclass.additional_identificator,
-                        ),
-                        school_id=role.student.school.id,
-                        school=item.School(
-                            id=role.student.school.id, name=role.student.school.name
-                        ),
-                    ),
-                )
-            )
-        elif role.role_type == database.RoleEnum.TEACHER:
-            roles.append(
-                outgoing.TeacherRole(
-                    id=role.id,
-                    is_main_role=role.is_main_role,
-                    role_type=role.role_type,
-                    data=outgoing.Teacher(
-                        teacher_id=role.teacher.id,
-                        name=role.teacher.name,
-                        school=item.School(
-                            name=role.teacher.school.name, id=role.teacher.school.id
-                        ),
-                    ),
-                )
-            )
-        elif role.role_type == database.RoleEnum.PARENT:
-            roles.append(
-                outgoing.ParentRole(
-                    id=role.id,
-                    is_main_role=role.is_main_role,
-                    role_type=role.role_type,
-                    data=outgoing.Parent(
-                        parent_id=role.parent.id,
-                        children=[
-                            outgoing.Child(
-                                child_id=child.id,
-                                subclass=item.Subclass(
-                                    id=child.subclass.id,
-                                    educational_level=child.subclass.educational_level,
-                                    identificator=child.subclass.identificator,
-                                    additional_identificator=child.subclass.additional_identificator,
-                                ),
-                                school=item.School(
-                                    name=child.school.name, id=child.school.id
-                                ),
-                            )
-                            for child in role.parent.children
-                        ],
-                    ),
-                )
-            )
-        elif role.role_type == database.RoleEnum.ADMINISTRATION:
-            roles.append(
-                outgoing.AdministrationRole(
-                    id=role.id,
-                    is_main_role=role.is_main_role,
-                    role_type=role.role_type,
-                    data=outgoing.Administration(
-                        school_id=role.administration.school.id,
-                        school=item.School(
-                            name=role.administration.school.name,
-                            id=role.administration.school.id,
-                        ),
-                    ),
-                )
-            )
-    return outgoing.Account(
-        premium_status=account.premium_status,
-        last_payment_data=account.last_payment_data,
-        subscription_until=account.subscription_until,
-        roles=roles,
-    )
+allowed = AllowLevels(Access.Admin, Access.Telegram)
 
 
 @router.get("/get", tags=[TELEGRAM], response_model=outgoing.Account)
-async def get_by_id(
-    telegram_id: TID,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
-):
+async def get_by_id(telegram_id: TID, session=Depends(get_session), _=Depends(allowed)):
     account = db_validated.get_account_by_telegram_id(session, telegram_id)
-    return account_with_roles(account)
+    return outgoing.Account.from_orm(account)
 
 
-@router.put("/add/parent", tags=[TELEGRAM, PARENT], response_model=outgoing.Account)
+@router.put("/add/parent", tags=[PARENT], response_model=outgoing.Account)
 def add_parent_role(
-    request: incoming.Parent,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
+    request: incoming.Parent, session=Depends(get_session), _=Depends(allowed)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
@@ -162,14 +67,12 @@ def add_parent_role(
     session.add(role)
     session.commit()
 
-    return account_with_roles(account)
+    return outgoing.Account.from_orm(account)
 
 
-@router.put("/add/student", tags=[TELEGRAM, STUDENT], response_model=outgoing.Account)
+@router.put("/add/student", tags=[STUDENT], response_model=outgoing.Account)
 def add_student_role(
-    request: incoming.Student,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
+    request: incoming.Student, session=Depends(get_session), _=Depends(allowed)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
@@ -201,14 +104,12 @@ def add_student_role(
     session.add(role)
     session.commit()
 
-    return account_with_roles(account)
+    return outgoing.Account.from_orm(account)
 
 
-@router.put("/add/teacher", tags=[TELEGRAM, TEACHER], response_model=outgoing.Account)
+@router.put("/add/teacher", tags=[TEACHER], response_model=outgoing.Account)
 def add_teacher_role(
-    request: incoming.Teacher,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
+    request: incoming.Teacher, session=Depends(get_session), _=Depends(allowed)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
@@ -235,18 +136,14 @@ def add_teacher_role(
     session.add(role)
     session.commit()
 
-    return account_with_roles(account)
+    return outgoing.Account.from_orm(account)
 
 
 @router.put(
-    "/add/administration",
-    tags=[TELEGRAM, ADMINISTRATION],
-    response_model=outgoing.Account,
+    "/add/administration", tags=[ADMINISTRATION], response_model=outgoing.Account
 )
 def add_administration_role(
-    request: incoming.Administration,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
+    request: incoming.Administration, session=Depends(get_session), _=Depends(allowed)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
@@ -279,14 +176,12 @@ def add_administration_role(
     session.add(role)
     session.commit()
 
-    return account_with_roles(account)
+    return outgoing.Account.from_orm(account)
 
 
-@router.put("/add/child", tags=[TELEGRAM, PARENT], response_model=outgoing.Child)
+@router.put("/add/child", tags=[PARENT], response_model=outgoing.Account)
 async def add_child(
-    request: incoming.Child,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
+    request: incoming.Child, session=Depends(get_session), _=Depends(allowed)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
@@ -324,25 +219,12 @@ async def add_child(
     session.add(account)
     session.commit()
 
-    return outgoing.Child(
-        child_id=child.id,
-        subclass=item.Subclass(
-            id=child.subclass_id,
-            educational_level=child.subclass.educational_level,
-            identificator=child.subclass.identificator,
-            additional_identificator=child.subclass.additional_identificator,
-        ),
-        school=item.School(
-            id=child.subclass.school_id, name=child.subclass.school.name
-        ),
-    )
+    return outgoing.Account.from_orm(account)
 
 
-@router.put("/delete/child", tags=[TELEGRAM, PARENT])
+@router.put("/delete/child", tags=[PARENT], response_model=outgoing.Account)
 async def remove_child(
-    request: bot_incoming.Child,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
+    request: bot_incoming.Child, session=Depends(get_session), _=Depends(allowed)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
@@ -370,16 +252,12 @@ async def remove_child(
     session.add(role)
     session.commit()
 
-    return {}
+    return outgoing.Account.from_orm(account)
 
 
-@router.put(
-    "/change/teacher", tags=[TEACHER, TELEGRAM], response_model=outgoing.Account
-)
+@router.put("/change/teacher", tags=[TEACHER], response_model=outgoing.Account)
 async def change_role_to_teacher(
-    request: incoming.Teacher,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
+    request: incoming.Teacher, session=Depends(get_session), _=Depends(allowed)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
     teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
@@ -424,7 +302,7 @@ async def change_role_to_teacher(
         session.add(account)
         session.commit()
 
-        return account_with_roles(account)
+        return outgoing.Account.from_orm(account)
 
         # raise HTTPException(
         #    status_code=409,
@@ -440,7 +318,7 @@ async def change_role_to_teacher(
         session.add(account)
         session.commit()
 
-        return account_with_roles(account)
+        return outgoing.Account.from_orm(account)
 
     if account.premium_status >= 1:
         new_role = database.Role(
@@ -478,14 +356,12 @@ async def change_role_to_teacher(
     session.add(account)
     session.commit()
 
-    return account_with_roles(account)
+    return outgoing.Account.from_orm(account)
 
 
-@router.put("/change/parent", tags=[PARENT, TELEGRAM], response_model=outgoing.Account)
+@router.put("/change/parent", tags=[PARENT], response_model=outgoing.Account)
 async def change_role_to_parent(
-    request: incoming.Parent,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
+    request: incoming.Parent, session=Depends(get_session), _=Depends(allowed)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
@@ -532,7 +408,7 @@ async def change_role_to_parent(
         session.add(account)
         session.commit()
 
-        return account_with_roles(account)
+        return outgoing.Account.from_orm(account)
         # raise HTTPException(
         #     status_code=409,
         #     detail=f"User {request.telegram_id} already has parent role",
@@ -547,7 +423,7 @@ async def change_role_to_parent(
         session.add(account)
         session.commit()
 
-        return account_with_roles(account)
+        return outgoing.Account.from_orm(account)
 
     if account.premium_status >= 1:
         new_role = database.Role(
@@ -585,16 +461,14 @@ async def change_role_to_parent(
     session.add(account)
     session.commit()
 
-    return account_with_roles(account)
+    return outgoing.Account.from_orm(account)
 
 
-@router.put(
-    "/change/student", tags=[STUDENT, TELEGRAM], response_model=outgoing.Account
-)
+@router.put("/change/student", tags=[STUDENT], response_model=outgoing.Account)
 async def change_role_to_student(
     request: incoming.Student,
     session=Depends(get_session),
-    _=Depends(management_allowed),
+    _=Depends(allowed),
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
     subclass = db_validated.get_subclass_by_id(session, request.subclass_id)
@@ -643,7 +517,7 @@ async def change_role_to_student(
         session.add(account)
         session.commit()
 
-        return account_with_roles(account)
+        return outgoing.Account.from_orm(account)
         # raise HTTPException(
         #     status_code=409,
         #     detail=f"User {request.telegram_id} already has student role",
@@ -658,7 +532,7 @@ async def change_role_to_student(
         session.add(account)
         session.commit()
 
-        return account_with_roles(account)
+        return outgoing.Account.from_orm(account)
 
     if account.premium_status >= 1:
         new_role = database.Role(
@@ -696,18 +570,14 @@ async def change_role_to_student(
     session.add(account)
     session.commit()
 
-    return account_with_roles(account)
+    return outgoing.Account.from_orm(account)
 
 
 @router.put(
-    "/change/administration",
-    tags=[ADMINISTRATION, TELEGRAM],
-    response_model=outgoing.Account,
+    "/change/administration", tags=[ADMINISTRATION], response_model=outgoing.Account
 )
 async def change_role_to_administration(
-    request: incoming.Administration,
-    session=Depends(get_session),
-    _=Depends(management_allowed),
+    request: incoming.Administration, session=Depends(get_session), _=Depends(allowed)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
     school = db_validated.get_subclass_by_id(session, request.school_id)
@@ -756,7 +626,7 @@ async def change_role_to_administration(
         session.add(account)
         session.commit()
 
-        return account_with_roles(account)
+        return outgoing.Account.from_orm(account)
         # raise HTTPException(
         #     status_code=409,
         #     detail=f"User {request.telegram_id} already has administration role",
@@ -771,7 +641,7 @@ async def change_role_to_administration(
         session.add(account)
         session.commit()
 
-        return account_with_roles(account)
+        return outgoing.Account.from_orm(account)
 
     if account.premium_status >= 1:
         new_role = database.Role(
@@ -809,4 +679,4 @@ async def change_role_to_administration(
     session.add(account)
     session.commit()
 
-    return account_with_roles(account)
+    return outgoing.Account.from_orm(account)

@@ -22,17 +22,15 @@ router = APIRouter(
 )
 logger.info(f"Lesson_number router created on {API_PREFIX+API_LESSON_NUMBER_PREFIX}")
 
-lesson_allowed = AllowLevels(Access.Admin, Access.Parser)
+allowed = AllowLevels(Access.Admin, Access.Parser)
 
 
-@router.post(
-    "/new", tags=[LESSON_NUMBER, WEBSITE], response_model=outgoing.LessonNumber
-)
+@router.post("/new", tags=[LESSON_NUMBER], response_model=outgoing.LessonNumber)
 async def create_new_lesson_number(
     lesson_number: incoming.LessonNumber,
     session=Depends(get_session),
-    _=Depends(lesson_allowed),
-) -> outgoing.LessonNumber:
+    _=Depends(allowed),
+):
     school = db_validated.get_school_by_id(session, lesson_number.school_id)
 
     logger.debug(
@@ -51,12 +49,12 @@ async def create_new_lesson_number(
     logger.debug(
         f"Searching lesson_number with number {lesson_number.number} and school_id {lesson_number.school_id}"
     )
-    check_unique = (
+    candidate = (
         session.query(database.Lesson_number)
         .filter_by(school_id=lesson_number.school_id, number=lesson_number.number)
-        .all()
+        .first()
     )
-    if check_unique:
+    if candidate:
         logger.debug(
             f"Raised an exception because the lesson_number with number {lesson_number.number} is already exists in school with id {lesson_number.school_id}"
         )
@@ -77,16 +75,12 @@ async def create_new_lesson_number(
     session.add(school)
     session.commit()
     logger.debug(f"Lesson_number acquired id {lesson_number.id}")
-    return outgoing.LessonNumber(id=lesson_number.id)
+    return outgoing.LessonNumber.from_orm(lesson_number)
 
 
-@router.put(
-    "/update", tags=[LESSON_NUMBER, WEBSITE], response_model=outgoing.LessonNumber
-)
+@router.put("/update", tags=[LESSON_NUMBER], response_model=outgoing.LessonNumber)
 async def update_timetable(
-    request: updating.LessonNumber,
-    session=Depends(get_session),
-    _=Depends(lesson_allowed),
+    request: updating.LessonNumber, session=Depends(get_session), _=Depends(allowed)
 ):
     lesson_number = db_validated.get_lesson_number_by_id(
         session, request.lesson_number_id
@@ -136,4 +130,4 @@ async def update_timetable(
     session.add(lesson_number)
     session.commit()
 
-    return outgoing.LessonNumber(id=lesson_number.id)
+    return outgoing.LessonNumber.from_orm(lesson_number)

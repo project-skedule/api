@@ -21,15 +21,13 @@ router = APIRouter(
 )
 logger.info(f"Lesson router created on {API_PREFIX+API_LESSON_PREFIX}")
 
-lesson_allowed = AllowLevels(Access.Admin, Access.Parser)
+allowed = AllowLevels(Access.Admin, Access.Parser)
 
 
-@router.post("/new", tags=[LESSON, WEBSITE], response_model=outgoing.Lesson)
+@router.post("/new", tags=[LESSON], response_model=outgoing.Lesson)
 async def create_new_lesson(
-    lesson: incoming.Lesson,
-    session=Depends(get_session),
-    _=Depends(lesson_allowed),
-) -> outgoing.Lesson:
+    lesson: incoming.Lesson, session=Depends(get_session), _=Depends(allowed)
+):
     cabinet = db_validated.get_cabinet_by_id(session, lesson.cabinet_id)
     corpus = db_validated.get_corpus_by_id(session, cabinet.corpus_id)
     school = db_validated.get_school_by_id(session, corpus.school_id)
@@ -41,7 +39,7 @@ async def create_new_lesson(
         db_validated.get_subclass_by_id(session, s_id) for s_id in lesson.subclasses
     ]
 
-    check_unique = (
+    candidate = (
         session.query(database.Lesson)
         .filter_by(
             school_id=school.id,
@@ -51,12 +49,12 @@ async def create_new_lesson(
             day_of_week=lesson.day_of_week,
             teacher_id=teacher.id,
         )
-        .all()
+        .first()
     )
 
-    if check_unique != []:
+    if candidate:
         logger.debug(
-            f"Raised an exception because lesson is already exists: {check_unique}"
+            f"Raised an exception because lesson is already exists: {candidate}"
         )
         raise HTTPException(status_code=409, detail="Lesson is already exists")
     lesson = database.Lesson(
@@ -75,14 +73,12 @@ async def create_new_lesson(
     session.add(school)
     session.commit()
     logger.debug(f"Lesson acquired id {lesson.id}")
-    return outgoing.Lesson(id=lesson.id)
+    return outgoing.Lesson.from_orm(lesson)
 
 
-@router.put("/update", tags=[LESSON, WEBSITE], response_model=outgoing.Lesson)
+@router.put("/update", tags=[LESSON], response_model=outgoing.Lesson)
 async def update_lesson(
-    request: updating.Lesson,
-    session=Depends(get_session),
-    _=Depends(lesson_allowed),
+    request: updating.Lesson, session=Depends(get_session), _=Depends(allowed)
 ):
     lesson = db_validated.get_lesson_by_id(session, request.lesson_id)
 
@@ -138,14 +134,15 @@ async def update_lesson(
     session.add(lesson)
     session.commit()
 
-    return outgoing.Lesson(id=lesson.id)
+    return outgoing.Lesson.from_orm(lesson)
 
 
-@router.delete("/delete", tags=[LESSON, WEBSITE], response_model=outgoing.Lesson)
+@router.delete("/delete", tags=[LESSON], response_model=outgoing.Lesson)
 async def delete_lesson(
-    lesson_id: ID, _=Depends(lesson_allowed), session=Depends(get_session)
+    lesson_id: ID, _=Depends(allowed), session=Depends(get_session)
 ):
     lesson = db_validated.get_lesson_by_id(session, lesson_id)
+    logger.info(f"Deleting lesson with id {lesson_id}")
     session.delete(lesson)
     session.commit()
-    return outgoing.Lesson(id=lesson_id)
+    return outgoing.Lesson.from_orm(lesson)

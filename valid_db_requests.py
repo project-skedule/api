@@ -239,3 +239,20 @@ def get_role_by_id(session: Session, uid: int) -> database.Role:
     logger.debug(f"Successfully found role with id {uid}")
 
     return role
+
+
+def get_tag_by_label(session: Session, label: str) -> database.Tag:
+    logger.debug(f"Searching tag with label {label}")
+    tag = session.query(database.Tag).filter_by(label=label).first()
+
+    if tag is None:
+        logger.debug(
+            f"Raised an exception because tag with role label {label} does not exists"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail=f"Tag with label {label} does not exists",
+        )
+    logger.debug(f"Successfully found tag with label {label}")
+
+    return tag

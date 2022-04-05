@@ -7,13 +7,11 @@ from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
 from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
-from extra.service_auth import AllowLevels, get_current_service
-from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER, TELEGRAM
+from extra.service_auth import AllowLevels
+from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER
 from fastapi import APIRouter, Depends
 from models import database
-from models.bot import item
 from models.bot.telegram import incoming, outgoing
-from models.bot.telegram.outgoing import registered
 
 router = APIRouter(
     prefix=API_PREFIX + API_REGISTRATION_PREFIX,
@@ -25,7 +23,7 @@ logger.info(f"Registation router created on {API_PREFIX+API_REGISTRATION_PREFIX}
 registration_allowed = AllowLevels(Access.Admin, Access.Telegram)
 
 
-@router.post("/student", tags=[TELEGRAM, STUDENT], response_model=registered.Student)
+@router.post("/student", tags=[STUDENT], response_model=outgoing.Account)
 async def register_student(
     request: incoming.Student,
     session=Depends(get_session),
@@ -58,30 +56,10 @@ async def register_student(
     session.add(role)
     session.commit()
 
-    return registered.Student(
-        premium_status=account.premium_status,
-        last_payment_data=account.last_payment_data,
-        subscription_until=account.subscription_until,
-        main_role=outgoing.StudentRole(
-            is_main_role=role.is_main_role,
-            role_type=role.role_type,
-            data=outgoing.Student(
-                subclass=item.Subclass(
-                    id=role.student.subclass.id,
-                    educational_level=role.student.subclass.educational_level,
-                    identificator=role.student.subclass.identificator,
-                    additional_identificator=role.student.subclass.additional_identificator,
-                ),
-                school=item.School(
-                    name=role.student.school.name,
-                    id=role.student.school.id,
-                ),
-            ),
-        ),
-    )
+    return outgoing.Account.from_orm(account)
 
 
-@router.post("/teacher", tags=[TEACHER, TELEGRAM], response_model=registered.Teacher)
+@router.post("/teacher", tags=[TEACHER], response_model=outgoing.Account)
 async def register_teacher(
     request: incoming.Teacher,
     session=Depends(get_session),
@@ -111,30 +89,10 @@ async def register_teacher(
     session.add(role)
     session.commit()
 
-    return registered.Teacher(
-        premium_status=account.premium_status,
-        last_payment_data=account.last_payment_data,
-        subscription_until=account.subscription_until,
-        main_role=outgoing.TeacherRole(
-            is_main_role=True,
-            role_type=role.role_type,
-            data=outgoing.Teacher(
-                teacher_id=role.teacher.id,
-                name=role.teacher.name,
-                school=item.School(
-                    name=role.teacher.school.name,
-                    id=role.teacher.school.id,
-                ),
-            ),
-        ),
-    )
+    return outgoing.Account.from_orm(account)
 
 
-@router.post(
-    "/administration",
-    tags=[ADMINISTRATION, TELEGRAM],
-    response_model=registered.Administration,
-)
+@router.post("/administration", tags=[ADMINISTRATION], response_model=outgoing.Account)
 async def register_administration(
     request: incoming.Administration,
     session=Depends(get_session),
@@ -166,24 +124,10 @@ async def register_administration(
     session.add(role)
     session.commit()
 
-    return registered.Administration(
-        premium_status=account.premium_status,
-        last_payment_data=account.last_payment_data,
-        subscription_until=account.subscription_until,
-        main_role=outgoing.AdministrationRole(
-            is_main_role=True,
-            role_type=role.role_type,
-            data=outgoing.Administration(
-                school=item.School(
-                    name=role.administration.school.name,
-                    id=role.administration.school.id,
-                ),
-            ),
-        ),
-    )
+    return outgoing.Account.from_orm(account)
 
 
-@router.post("/parent", tags=[PARENT, TELEGRAM], response_model=registered.Parent)
+@router.post("/parent", tags=[PARENT], response_model=outgoing.Account)
 async def register_parent(
     request: incoming.Parent,
     session=Depends(get_session),
@@ -215,31 +159,4 @@ async def register_parent(
     session.add(role)
     session.commit()
 
-    return registered.Parent(
-        premium_status=account.premium_status,
-        last_payment_data=account.last_payment_data,
-        subscription_until=account.subscription_until,
-        main_role=outgoing.ParentRole(
-            is_main_role=role.is_main_role,
-            role_type=role.role_type,
-            data=outgoing.Parent(
-                parent_id=role.parent.id,
-                children=[
-                    outgoing.Child(
-                        child_id=student.id,
-                        subclass=item.Subclass(
-                            id=student.subclass.id,
-                            educational_level=student.subclass.educational_level,
-                            identificator=student.subclass.identificator,
-                            additional_identificator=student.subclass.additional_identificator,
-                        ),
-                        school=item.School(
-                            name=student.subclass.school.name,
-                            id=student.subclass.school.id,
-                        ),
-                    )
-                    for student in role.parent.children
-                ],
-            ),
-        ),
-    )
+    return outgoing.Account.from_orm(account)

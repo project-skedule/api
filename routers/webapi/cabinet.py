@@ -13,19 +13,20 @@ from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.web import incoming, outgoing, updating
 
+
+allowed = AllowLevels(Access.Admin, Access.Parser)
+
 router = APIRouter(
     prefix=API_PREFIX + API_CABINET_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Cabinet router created on {API_PREFIX+API_CABINET_PREFIX}")
 
-allowed = AllowLevels(Access.Admin, Access.Parser)
-
 
 @router.post("/new", tags=[CABINET], response_model=outgoing.Cabinet)
 async def create_new_cabinet(
-    request: incoming.Cabinet, session=Depends(get_session), _=Depends(allowed)
+    request: incoming.Cabinet, session=Depends(get_session)
 ) -> outgoing.Cabinet:
     corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
     school = db_validated.get_school_by_id(session, corpus.school_id)
@@ -66,9 +67,7 @@ async def create_new_cabinet(
 
 
 @router.put("/update", tags=[CABINET], response_model=outgoing.Cabinet)
-async def update_cabinet(
-    request: updating.Cabinet, session=Depends(get_session), _=Depends(allowed)
-):
+async def update_cabinet(request: updating.Cabinet, session=Depends(get_session)):
     cabinet = db_validated.get_cabinet_by_id(session, request.cabinet_id)
 
     if request.floor is not None:

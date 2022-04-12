@@ -18,15 +18,14 @@ from typing_extensions import Annotated
 
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownLambdaType=false, reportGeneralTypeIssues=false
 
+allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_LESSON_GETTER_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Lesson Getter router created on {API_PREFIX+API_LESSON_GETTER_PREFIX}")
-
-allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
 
 
 @router.get("/day", tags=[LESSON], response_model=info.LessonsForDay)
@@ -36,7 +35,6 @@ async def get_lesson_for_day(
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
     session=Depends(get_session),
-    _=Depends(allowed),
 ):
     if teacher_id is not None and subclass_id is not None:
         raise HTTPException(
@@ -83,7 +81,6 @@ async def get_lesson_for_range(
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
     session=Depends(get_session),
-    _=Depends(allowed),
 ):
     if teacher_id is not None and subclass_id is not None:
         raise HTTPException(
@@ -149,7 +146,6 @@ async def get_certain_lesson(
     teacher_id: Optional[ID] = None,
     subclass_id: Optional[ID] = None,
     session=Depends(get_session),
-    _=Depends(allowed),
 ):
     if teacher_id is not None and subclass_id is not None:
         raise HTTPException(

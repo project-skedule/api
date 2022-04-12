@@ -13,20 +13,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.web import incoming, outgoing, updating
 
+
+allowed = AllowLevels(Access.Admin, Access.Parser)
+
 router = APIRouter(
     prefix=API_PREFIX + API_SUBCLASS_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Subclass fouter created on {API_PREFIX + API_SUBCLASS_PREFIX}")
 
-allowed = AllowLevels(Access.Admin, Access.Parser)
-
 
 @router.post("/new", tags=[SUBCLASS], response_model=outgoing.Subclass)
-async def create_new_subclass(
-    subclass: incoming.Subclass, _=Depends(allowed), session=Depends(get_session)
-):
+async def create_subclass(subclass: incoming.Subclass, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, subclass.school_id)
     logger.info(
         f"Adding subclass '{subclass.educational_level}{subclass.identificator}{subclass.additional_identificator}' to school '{school.name}' "
@@ -63,9 +62,7 @@ async def create_new_subclass(
 
 
 @router.put("/update", tags=[SUBCLASS], response_model=outgoing.Subclass)
-async def update_subclass(
-    request: updating.Subclass, _=Depends(allowed), session=Depends(get_session)
-):
+async def update_subclass(request: updating.Subclass, session=Depends(get_session)):
     subclass = db_validated.get_subclass_by_id(session, request.subclass_id)
 
     if request.educational_level is not None:

@@ -13,20 +13,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.web import incoming, outgoing, updating
 
+allowed = AllowLevels(Access.Admin, Access.Parser)
+
 router = APIRouter(
     prefix=API_PREFIX + API_SCHOOL_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"School router created on {API_PREFIX+API_SCHOOL_PREFIX}")
 
-allowed = AllowLevels(Access.Admin, Access.Parser)
-
 
 @router.post("/new", tags=[SCHOOL], response_model=outgoing.School)
-async def create_new_school(
-    school: incoming.School, session=Depends(get_session), _=Depends(allowed)
-):
+async def create_new_school(school: incoming.School, session=Depends(get_session)):
     logger.debug(f'Searching school with name "{school.name}"')
     candidate = session.query(database.School).filter_by(name=school.name).first()
     if candidate:
@@ -46,9 +44,7 @@ async def create_new_school(
 
 
 @router.put("/update", tags=[SCHOOL, WEBSITE], response_model=outgoing.School)
-async def update_school(
-    request: updating.School, session=Depends(get_session), _=Depends(allowed)
-):
+async def update_school(request: updating.School, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, request.school_id)
 
     if request.name is not None:

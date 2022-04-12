@@ -13,6 +13,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.web import incoming, outgoing, updating
 
+allowed = AllowLevels(Access.Admin, Access.Parser)
+
 router = APIRouter(
     prefix=API_PREFIX + API_CORPUS_PREFIX,
     dependencies=[Depends(create_logger_dependency(logger))],
@@ -20,13 +22,9 @@ router = APIRouter(
 )
 logger.info(f"Corpus router created on {API_PREFIX+API_CORPUS_PREFIX}")
 
-allowed = AllowLevels(Access.Admin, Access.Parser)
-
 
 @router.post("/new", tags=[CORPUS], response_model=outgoing.Corpus)
-async def create_new_corpus(
-    corpus: incoming.Corpus, session=Depends(get_session), _=Depends(allowed)
-) -> outgoing.Corpus:
+async def create_new_corpus(corpus: incoming.Corpus, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, corpus.school_id)
     logger.debug(
         f"Searching corpus with name {corpus.name} and school_id {corpus.school_id}"
@@ -59,9 +57,7 @@ async def create_new_corpus(
 
 
 @router.put("/update", tags=[CORPUS], response_model=outgoing.Corpus)
-async def update_corpus(
-    request: updating.Corpus, session=Depends(get_session), _=Depends(allowed)
-):
+async def update_corpus(request: updating.Corpus, session=Depends(get_session)):
     corpus = db_validated.get_corpus_by_id(session, request.corpus_id)
 
     if request.address is not None:

@@ -13,20 +13,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.web import incoming, outgoing, updating
 
+allowed = AllowLevels(Access.Admin, Access.Parser)
+
 router = APIRouter(
     prefix=API_PREFIX + API_TEACHER_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Teacher router created on {API_PREFIX+API_TEACHER_PREFIX}")
 
-allowed = AllowLevels(Access.Admin, Access.Parser)
-
 
 @router.post("/new", tags=[TEACHER], response_model=outgoing.Teacher)
-async def create_new_teacher(
-    request: incoming.Teacher, session=Depends(get_session), _=Depends(allowed)
-):
+async def create_new_teacher(request: incoming.Teacher, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, request.school_id)
     logger.debug(
         f"Searching teacher with name {request.name} in school with id {request.school_id}"
@@ -60,9 +58,7 @@ async def create_new_teacher(
 
 
 @router.put("/update", tags=[TEACHER], response_model=outgoing.Teacher)
-async def update_teacher(
-    request: updating.Teacher, session=Depends(get_session), _=Depends(allowed)
-):
+async def update_teacher(request: updating.Teacher, session=Depends(get_session)):
     teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
 
     if request.name is not None:

@@ -34,36 +34,32 @@ allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_INFO_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Info router created on {API_PREFIX+API_INFO_PREFIX}")
 
 
 @router.get("/subclasses/all", tags=[SUBCLASS], response_model=info.Subclasses)
-async def get_subclasses(
-    school_id: ID, session=Depends(get_session), _=Depends(allowed)
-):
+async def get_subclasses(school_id: ID, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, school_id)
     return info.Subclasses(data=[item.Subclass.from_orm(s) for s in school.subclasses])
 
 
 @router.get("/tags/all", tags=[TAG], response_model=info.Tags)
-async def get_all_tags(session=Depends(get_session), _=Depends(allowed)):
+async def get_all_tags(session=Depends(get_session)):
     tags = session.query(database.Tag).all()
     return info.Tags(data=[item.Tag.from_orm(t) for t in tags])
 
 
 @router.get("/teachers/all", tags=[TEACHER], response_model=info.Teachers)
-async def get_teachers(school_id: ID, session=Depends(get_session), _=Depends(allowed)):
+async def get_teachers(school_id: ID, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, school_id)
     return info.Teachers(data=[item.Teacher.from_orm(t) for t in school.teachers])
 
 
 @router.get("/parallels/all", tags=[SUBCLASS], response_model=info.Parallels)
-async def get_parallels(
-    school_id: ID, session=Depends(get_session), _=Depends(allowed)
-):
+async def get_parallels(school_id: ID, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, school_id)
     return info.Parallels(data=list({i.educational_level for i in school.subclasses}))
 
@@ -73,7 +69,6 @@ async def get_teacher_by_levenshtein(
     school_id: ID,
     name: Annotated[str, Field(max_length=200, min_length=1)],
     session=Depends(get_session),
-    _=Depends(allowed),
 ):
     school = db_validated.get_school_by_id(session, school_id)
     name = name.lower()
@@ -108,7 +103,6 @@ async def get_letters(
     school_id: ID,
     educational_level: Annotated[int, Field(ge=0, le=12)],
     session=Depends(get_session),
-    _=Depends(allowed),
 ):
     school = db_validated.get_school_by_id(session, school_id)
     data = filter(lambda s: s.educational_level == educational_level, school.subclasses)
@@ -121,7 +115,6 @@ async def get_groups(
     educational_level: Annotated[int, Field(ge=0, le=12)],
     identificator: Annotated[str, Field(max_length=50)],
     session=Depends(get_session),
-    _=Depends(allowed),
 ):
     school = db_validated.get_school_by_id(session, school_id)
     data = filter(
@@ -133,13 +126,13 @@ async def get_groups(
 
 
 @router.get("/schools/all", tags=[SCHOOL], response_model=info.Schools)
-async def get_school(session=Depends(get_session), _=Depends(allowed)):
+async def get_school(session=Depends(get_session)):
     schools = session.query(database.School).all()
     return info.Schools(data=[item.School.from_orm(school) for school in schools])
 
 
 @router.get("/corpuses/all", tags=[CORPUS], response_model=info.Corpuses)
-async def get_corpuses(school_id: ID, session=Depends(get_session), _=Depends(allowed)):
+async def get_corpuses(school_id: ID, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, school_id)
     return info.Corpuses(data=[item.Corpus.from_orm(c) for c in school.corpuses])
 
@@ -148,7 +141,6 @@ async def get_corpuses(school_id: ID, session=Depends(get_session), _=Depends(al
 async def get_schools_by_levenshtein(
     name: Annotated[str, Field(max_length=200, min_length=1)],
     session=Depends(get_session),
-    _=Depends(allowed),
 ):
     schools = (
         session.query(database.School)
@@ -160,7 +152,7 @@ async def get_schools_by_levenshtein(
 
 
 @router.get("/cabinets/all", tags=[CABINET], response_model=info.Cabinets)
-async def get_cabinets(school_id: ID, session=Depends(get_session), _=Depends(allowed)):
+async def get_cabinets(school_id: ID, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, school_id)
     return info.Cabinets(data=[item.Cabinet.from_orm(c) for c in school.cabinets])
 
@@ -178,7 +170,7 @@ async def get_cabinets_by_tag(school_id: ID, tag: str, session=Depends(get_sessi
 
 
 @router.get("/lessons/all", tags=[LESSON], response_model=info.Lessons)
-async def get_lessons(school_id: ID, session=Depends(get_session), _=Depends(allowed)):
+async def get_lessons(school_id: ID, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, school_id)
     return info.Lessons(data=[item.Lesson.from_orm(l) for l in school.lessons])
 
@@ -186,9 +178,7 @@ async def get_lessons(school_id: ID, session=Depends(get_session), _=Depends(all
 @router.get(
     "/lessontimetables/all", tags=[LESSON_NUMBER], response_model=info.LessonNumbers
 )
-async def get_all_timetables(
-    school_id: ID, session=Depends(get_session), _=Depends(allowed)
-):
+async def get_all_timetables(school_id: ID, session=Depends(get_session)):
     school = db_validated.get_school_by_id(session, school_id)
     return info.LessonNumbers(
         data=[item.LessonNumber.from_orm(ln) for ln in school.lesson_numbers]
@@ -202,7 +192,6 @@ async def get_free_cabinet(
     lesson_number: Optional[Annotated[int, Field(ge=0, le=20)]] = None,
     floor: Optional[Annotated[int, Field(ge=-10, le=100)]] = None,
     session=Depends(get_session),
-    _=Depends(allowed),
 ):
     corpus = db_validated.get_corpus_by_id(session, corpus_id)
     cabinet_query = session.query(database.Cabinet).filter_by(corpus_id=corpus.id)
@@ -229,9 +218,7 @@ async def get_free_cabinet(
 
 
 @router.get("/corpus/canteen", tags=[CORPUS], response_model=info.Canteen)
-async def get_canteen_text(
-    corpus_id: ID, session=Depends(get_session), _=Depends(allowed)
-):
+async def get_canteen_text(corpus_id: ID, session=Depends(get_session)):
     return info.Canteen.from_orm(db_validated.get_corpus_by_id(session, corpus_id))
 
 
@@ -242,7 +229,6 @@ async def get_subclass_by_params(
     identificator: Annotated[str, Field(max_length=50)],
     additional_identificator: Annotated[str, Field(max_length=50)],
     session=Depends(get_session),
-    _=Depends(allowed),
 ) -> item.Subclass:
     school = db_validated.get_school_by_id(session, school_id)
     subclass = db_validated.get_subclass_by_params(
@@ -255,18 +241,22 @@ async def get_subclass_by_params(
     return item.Subclass.from_orm(subclass)
 
 
-@router.get("/check/telegramid", tags=[TELEGRAM], response_model=item.Result)
-async def check_existence(
-    telegram_id: TID,
-    session=Depends(get_session),
-    _=Depends(AllowLevels(Access.Admin, Access.Telegram)),
-):
+@router.get(
+    "/check/telegramid",
+    tags=[TELEGRAM],
+    response_model=item.Result,
+    dependencies=[Depends(AllowLevels(Access.Admin, Access.Telegram))],
+)
+async def check_existence(telegram_id: TID, session=Depends(get_session)):
     account = session.query(database.Account).filter_by(telegram_id=telegram_id).first()
     return item.Result(data=account is not None)
 
 
-@router.get("/telegramid/all", tags=[TELEGRAM], response_model=List[int])
-async def get_all_users(
-    session=Depends(get_session), _=Depends(AllowLevels(Access.Admin))
-):
+@router.get(
+    "/telegramid/all",
+    tags=[TELEGRAM],
+    response_model=List[int],
+    dependencies=[Depends(AllowLevels(Access.Admin))],
+)
+async def get_all_users(session=Depends(get_session)):
     return [acc.telegram_id for acc in session.query(database.Account).all()]

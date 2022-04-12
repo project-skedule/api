@@ -14,20 +14,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.web import incoming, outgoing, updating
 
+allowed = AllowLevels(Access.Admin, Access.Parser)
+
 router = APIRouter(
     prefix=API_PREFIX + API_LESSON_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Lesson router created on {API_PREFIX+API_LESSON_PREFIX}")
 
-allowed = AllowLevels(Access.Admin, Access.Parser)
-
 
 @router.post("/new", tags=[LESSON], response_model=outgoing.Lesson)
-async def create_new_lesson(
-    lesson: incoming.Lesson, session=Depends(get_session), _=Depends(allowed)
-):
+async def create_new_lesson(lesson: incoming.Lesson, session=Depends(get_session)):
     cabinet = db_validated.get_cabinet_by_id(session, lesson.cabinet_id)
     corpus = db_validated.get_corpus_by_id(session, cabinet.corpus_id)
     school = db_validated.get_school_by_id(session, corpus.school_id)
@@ -77,9 +75,7 @@ async def create_new_lesson(
 
 
 @router.put("/update", tags=[LESSON], response_model=outgoing.Lesson)
-async def update_lesson(
-    request: updating.Lesson, session=Depends(get_session), _=Depends(allowed)
-):
+async def update_lesson(request: updating.Lesson, session=Depends(get_session)):
     lesson = db_validated.get_lesson_by_id(session, request.lesson_id)
 
     if request.day_of_week is not None:
@@ -138,9 +134,7 @@ async def update_lesson(
 
 
 @router.delete("/delete", tags=[LESSON], response_model=outgoing.Lesson)
-async def delete_lesson(
-    lesson_id: ID, _=Depends(allowed), session=Depends(get_session)
-):
+async def delete_lesson(lesson_id: ID, session=Depends(get_session)):
     lesson = db_validated.get_lesson_by_id(session, lesson_id)
     logger.info(f"Deleting lesson with id {lesson_id}")
     session.delete(lesson)

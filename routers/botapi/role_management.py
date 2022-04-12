@@ -17,28 +17,27 @@ from models import database
 from models.bot import incoming as bot_incoming
 from models.bot.telegram import incoming, outgoing
 
+
+allowed = AllowLevels(Access.Admin, Access.Telegram)
+
 router = APIRouter(
     prefix=API_PREFIX + API_ROLE_MANAGEMENT_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(
     f"Role management router created on {API_PREFIX+API_ROLE_MANAGEMENT_PREFIX}"
 )
 
-allowed = AllowLevels(Access.Admin, Access.Telegram)
-
 
 @router.get("/get", tags=[TELEGRAM], response_model=outgoing.Account)
-async def get_by_id(telegram_id: TID, session=Depends(get_session), _=Depends(allowed)):
+async def get_by_id(telegram_id: TID, session=Depends(get_session)):
     account = db_validated.get_account_by_telegram_id(session, telegram_id)
     return outgoing.Account.from_orm(account)
 
 
 @router.put("/add/parent", tags=[PARENT], response_model=outgoing.Account)
-def add_parent_role(
-    request: incoming.Parent, session=Depends(get_session), _=Depends(allowed)
-):
+def add_parent_role(request: incoming.Parent, session=Depends(get_session)):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
     if any(role.role_type == database.RoleEnum.PARENT for role in account.roles):
@@ -71,9 +70,7 @@ def add_parent_role(
 
 
 @router.put("/add/student", tags=[STUDENT], response_model=outgoing.Account)
-def add_student_role(
-    request: incoming.Student, session=Depends(get_session), _=Depends(allowed)
-):
+def add_student_role(request: incoming.Student, session=Depends(get_session)):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
     if any(role.role_type == database.RoleEnum.STUDENT for role in account.roles):
@@ -108,9 +105,7 @@ def add_student_role(
 
 
 @router.put("/add/teacher", tags=[TEACHER], response_model=outgoing.Account)
-def add_teacher_role(
-    request: incoming.Teacher, session=Depends(get_session), _=Depends(allowed)
-):
+def add_teacher_role(request: incoming.Teacher, session=Depends(get_session)):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
     if any(role.role_type == database.RoleEnum.TEACHER for role in account.roles):
@@ -143,7 +138,7 @@ def add_teacher_role(
     "/add/administration", tags=[ADMINISTRATION], response_model=outgoing.Account
 )
 def add_administration_role(
-    request: incoming.Administration, session=Depends(get_session), _=Depends(allowed)
+    request: incoming.Administration, session=Depends(get_session)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
@@ -180,9 +175,7 @@ def add_administration_role(
 
 
 @router.put("/add/child", tags=[PARENT], response_model=outgoing.Account)
-async def add_child(
-    request: incoming.Child, session=Depends(get_session), _=Depends(allowed)
-):
+async def add_child(request: incoming.Child, session=Depends(get_session)):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
     for role in account.roles:
@@ -223,9 +216,7 @@ async def add_child(
 
 
 @router.put("/delete/child", tags=[PARENT], response_model=outgoing.Account)
-async def remove_child(
-    request: bot_incoming.Child, session=Depends(get_session), _=Depends(allowed)
-):
+async def remove_child(request: bot_incoming.Child, session=Depends(get_session)):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
     for role in account.roles:
@@ -257,7 +248,7 @@ async def remove_child(
 
 @router.put("/change/teacher", tags=[TEACHER], response_model=outgoing.Account)
 async def change_role_to_teacher(
-    request: incoming.Teacher, session=Depends(get_session), _=Depends(allowed)
+    request: incoming.Teacher, session=Depends(get_session)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
     teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
@@ -360,9 +351,7 @@ async def change_role_to_teacher(
 
 
 @router.put("/change/parent", tags=[PARENT], response_model=outgoing.Account)
-async def change_role_to_parent(
-    request: incoming.Parent, session=Depends(get_session), _=Depends(allowed)
-):
+async def change_role_to_parent(request: incoming.Parent, session=Depends(get_session)):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
 
     main_role = None
@@ -466,9 +455,7 @@ async def change_role_to_parent(
 
 @router.put("/change/student", tags=[STUDENT], response_model=outgoing.Account)
 async def change_role_to_student(
-    request: incoming.Student,
-    session=Depends(get_session),
-    _=Depends(allowed),
+    request: incoming.Student, session=Depends(get_session)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
     subclass = db_validated.get_subclass_by_id(session, request.subclass_id)
@@ -577,7 +564,7 @@ async def change_role_to_student(
     "/change/administration", tags=[ADMINISTRATION], response_model=outgoing.Account
 )
 async def change_role_to_administration(
-    request: incoming.Administration, session=Depends(get_session), _=Depends(allowed)
+    request: incoming.Administration, session=Depends(get_session)
 ):
     account = db_validated.get_account_by_telegram_id(session, request.telegram_id)
     school = db_validated.get_subclass_by_id(session, request.school_id)

@@ -8,7 +8,6 @@ from api_types.types import TID
 from config import API_PREFIX, API_ROLE_MANAGEMENT_PREFIX, BASIC_STATUS_MAX_CHILDREN
 from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels
 from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER, TELEGRAM
@@ -22,7 +21,7 @@ allowed = AllowLevels(Access.Admin, Access.Telegram)
 
 router = APIRouter(
     prefix=API_PREFIX + API_ROLE_MANAGEMENT_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(

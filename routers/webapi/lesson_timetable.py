@@ -7,7 +7,6 @@ import valid_db_requests as db_validated
 from config import API_LESSON_NUMBER_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
 from extra.tags import LESSON_NUMBER, WEBSITE
@@ -19,7 +18,7 @@ allowed = AllowLevels(Access.Admin, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_LESSON_NUMBER_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Lesson_number router created on {API_PREFIX+API_LESSON_NUMBER_PREFIX}")

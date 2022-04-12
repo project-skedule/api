@@ -6,7 +6,6 @@ from api_types.types import ID
 from config import API_LESSON_GETTER_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
 from extra.tags import LESSON, TELEGRAM
@@ -22,7 +21,7 @@ allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_LESSON_GETTER_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Lesson Getter router created on {API_PREFIX+API_LESSON_GETTER_PREFIX}")

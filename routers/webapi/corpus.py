@@ -5,9 +5,8 @@ import valid_db_requests as db_validated
 from config import API_CORPUS_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
-from extra.service_auth import AllowLevels, get_current_service
+from extra.service_auth import AllowLevels
 from extra.tags import CORPUS, WEBSITE
 from fastapi import APIRouter, Depends, HTTPException
 from models import database
@@ -17,7 +16,7 @@ allowed = AllowLevels(Access.Admin, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_CORPUS_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Corpus router created on {API_PREFIX+API_CORPUS_PREFIX}")

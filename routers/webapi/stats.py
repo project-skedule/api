@@ -5,7 +5,6 @@ from api_types import ID
 from config import API_PREFIX, API_STATISTICS_PREFIX
 from config import DEFAULT_LOGGER as logger
 from config import get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.auth_api import get_harvest_user
 from extra.tags import STATS
@@ -16,7 +15,7 @@ from config import BaseModel
 
 router = APIRouter(
     prefix=API_PREFIX + API_STATISTICS_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger)), Depends(get_harvest_user)],
+    dependencies=[Depends(get_harvest_user)],
     route_class=LoggingRouter,
 )
 logger.info(f"Statistics router created on {API_PREFIX + API_STATISTICS_PREFIX}")

@@ -10,7 +10,6 @@ from config import (
     Access,
     get_session,
 )
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import (
@@ -25,10 +24,7 @@ from config import BaseModel
 from sqlalchemy.orm.session import Session
 
 # do not user logging middlewhere here
-router = APIRouter(
-    prefix=API_PREFIX + API_SERVICE_AUTH_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
-)
+router = APIRouter(prefix=API_PREFIX + API_SERVICE_AUTH_PREFIX)
 logger.info(f"Service auth router created on {API_PREFIX + API_SERVICE_AUTH_PREFIX}")
 
 OAUTH2_SERVICE_SCHEME = OAuth2PasswordBearer(

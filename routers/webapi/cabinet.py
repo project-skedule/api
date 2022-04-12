@@ -5,7 +5,6 @@ import valid_db_requests as db_validated
 from config import API_CABINET_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
 from extra.tags import CABINET, WEBSITE, get_tags
@@ -18,7 +17,7 @@ allowed = AllowLevels(Access.Admin, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_CABINET_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Cabinet router created on {API_PREFIX+API_CABINET_PREFIX}")

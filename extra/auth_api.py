@@ -11,7 +11,6 @@ from config import (
     JWT_USER_REFRESH_TOKEN_EXPIRE_MINUTES,
     get_session,
 )
-from extra import create_logger_dependency
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -21,10 +20,7 @@ from config import BaseModel
 from pydantic import EmailStr
 
 # do not user logging middlewhere here
-router = APIRouter(
-    prefix=API_PREFIX + API_AUTH_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
-)
+router = APIRouter(prefix=API_PREFIX + API_AUTH_PREFIX)
 logger.info(f"User auth router created on {API_PREFIX + API_AUTH_PREFIX}")
 
 OAUTH2_AUTH_SCHEME = OAuth2PasswordBearer(

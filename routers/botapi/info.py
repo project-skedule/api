@@ -8,7 +8,6 @@ from api_types import ID, TID
 from config import API_INFO_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
 from config import MAX_LEVENSHTEIN_RESULTS, Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
 from extra.tags import (
@@ -34,7 +33,7 @@ allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_INFO_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Info router created on {API_PREFIX+API_INFO_PREFIX}")

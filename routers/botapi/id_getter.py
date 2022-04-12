@@ -5,7 +5,6 @@ from api_types import ID
 from config import API_ID_GETTER_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels
 from extra.tags import (
@@ -24,7 +23,7 @@ allowed = AllowLevels(Access.Admin, Access.Telegram, Access.Parser)
 
 router = APIRouter(
     prefix=API_PREFIX + API_ID_GETTER_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger)), Depends(allowed)],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"ID getter router created on {API_PREFIX+API_ID_GETTER_PREFIX}")

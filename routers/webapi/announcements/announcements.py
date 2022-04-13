@@ -47,6 +47,7 @@ async def post_new_announcement(
         subclasses=[outgoing.preview.Subclass.from_orm(s) for s in subclasses],
         sent_to_parents=request.resend_to_parents,
         sent_only_to_parents=request.send_only_to_parents,
+        silent=request.silent,
     )
 
 
@@ -66,16 +67,13 @@ async def preview_announcement(
         subclasses=[outgoing.preview.Subclass.from_orm(s) for s in subclasses],
         sent_to_parents=request.resend_to_parents,
         sent_only_to_parents=request.send_only_to_parents,
+        silent=request.silent,
     )
 
 
-@router.post(
-    "/toall",
-    tags=[ANNOUNCEMENTS, WEBSITE],
-    response_model=List[int],
-)
+@router.post("/toall", tags=[ANNOUNCEMENTS], response_model=List[int])
 async def send_to_all(
-    request: incoming.SimpleAnnouncement,
+    request: incoming.SimpleTelegraphAnnouncement,
     session=Depends(get_session),
     _=Depends(AllowLevels(Access.Admin)),
 ):
@@ -93,7 +91,19 @@ async def send_to_all(
 
     telegram_ids = [acc.telegram_id for acc in accounts]
 
-    await send_to_transmitter(link, telegram_ids)
+    await send_to_transmitter(link, telegram_ids, silent=request.silent)
+    return telegram_ids
+
+
+@router.post("/text/toall", tags=[ANNOUNCEMENTS], response_model=List[int])
+async def send_text_to_all(
+    request: incoming.SimpleTextAnnouncement,
+    session=Depends(get_session),
+    _=Depends(AllowLevels(Access.Admin)),
+):
+    accounts = session.query(database.Account).all()
+    telegram_ids = [acc.telegram_id for acc in accounts]
+    await send_to_transmitter(request.text, telegram_ids, silent=request.silent)
     return telegram_ids
 
 

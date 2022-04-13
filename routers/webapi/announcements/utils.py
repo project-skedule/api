@@ -146,18 +146,18 @@ async def process_announcement(
         session.add(announcement)
         session.commit()
 
-        await send_to_transmitter(link, telegram_ids)
+        await send_to_transmitter(link, telegram_ids, silent=request.silent)
 
     return teachers, subclasses
 
 
 async def send_to_transmitter(
-    link: str, telegram_ids: Union[List[Column], Set[Column]]
+    text: str, telegram_ids: Union[List[Column], Set[Column]], silent: bool = False
 ):
     async with aiohttp.ClientSession() as http_session:
         async with http_session.post(
             f"http://{TRANSMITTER_HOST}:{TRANSMITTER_PORT}/api/trans/redirect/telegram",
-            json={"link": link, "telegram_ids": list(telegram_ids)},
+            json={"text": text, "telegram_ids": list(telegram_ids), "silent": silent},
         ) as response:
             if response.status != 200:
                 logger.error(

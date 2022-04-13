@@ -9,4 +9,7 @@ from models.web.incoming.lesson_number import LessonNumber
 from models.web.incoming.school import School
 from models.web.incoming.subclass import Subclass
 from models.web.incoming.teacher import Teacher
-from models.web.incoming.simple_announcement import SimpleAnnouncement
+from models.web.incoming.simple_announcement import (
+    SimpleTelegraphAnnouncement,
+    SimpleTextAnnouncement,
+)

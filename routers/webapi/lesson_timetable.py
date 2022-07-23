@@ -7,7 +7,6 @@ import valid_db_requests as db_validated
 from config import API_LESSON_NUMBER_PREFIX, API_PREFIX
 from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels, get_current_service
 from extra.tags import LESSON_NUMBER, WEBSITE
@@ -15,21 +14,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from models import database
 from models.web import incoming, outgoing, updating
 
+allowed = AllowLevels(Access.Admin, Access.Parser)
+
 router = APIRouter(
     prefix=API_PREFIX + API_LESSON_NUMBER_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Lesson_number router created on {API_PREFIX+API_LESSON_NUMBER_PREFIX}")
 
-allowed = AllowLevels(Access.Admin, Access.Parser)
-
 
 @router.post("/new", tags=[LESSON_NUMBER], response_model=outgoing.LessonNumber)
 async def create_new_lesson_number(
-    lesson_number: incoming.LessonNumber,
-    session=Depends(get_session),
-    _=Depends(allowed),
+    lesson_number: incoming.LessonNumber, session=Depends(get_session)
 ):
     school = db_validated.get_school_by_id(session, lesson_number.school_id)
 
@@ -80,7 +77,7 @@ async def create_new_lesson_number(
 
 @router.put("/update", tags=[LESSON_NUMBER], response_model=outgoing.LessonNumber)
 async def update_timetable(
-    request: updating.LessonNumber, session=Depends(get_session), _=Depends(allowed)
+    request: updating.LessonNumber, session=Depends(get_session)
 ):
     lesson_number = db_validated.get_lesson_number_by_id(
         session, request.lesson_number_id

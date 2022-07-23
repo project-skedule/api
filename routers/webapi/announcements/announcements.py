@@ -11,7 +11,6 @@ import valid_db_requests as db_validated
 from config import API_ANNOUNCEMENTS_PREFIX, API_PREFIX, MAX_HISTORY_RESULTS
 from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels
 from extra.tags import ANNOUNCEMENTS, WEBSITE
@@ -21,14 +20,13 @@ from fastapi.exceptions import HTTPException
 from models import database
 from models.web import incoming, outgoing
 
+allowed = AllowLevels(Access.Admin, Access.Website)
 
 router = APIRouter(
     prefix=API_PREFIX + API_ANNOUNCEMENTS_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
-
-announcements_allowed = AllowLevels(Access.Admin, Access.Website)
 
 
 @router.post(
@@ -37,9 +35,7 @@ announcements_allowed = AllowLevels(Access.Admin, Access.Website)
     response_model=outgoing.AnnouncementsPreview,
 )
 async def post_new_announcement(
-    request: incoming.Announcement,
-    session=Depends(get_session),
-    _=Depends(announcements_allowed),
+    request: incoming.Announcement, session=Depends(get_session)
 ):
     teachers, subclasses = await process_announcement(session, request, save=True)
     return outgoing.AnnouncementsPreview(
@@ -47,6 +43,7 @@ async def post_new_announcement(
         subclasses=[outgoing.preview.Subclass.from_orm(s) for s in subclasses],
         sent_to_parents=request.resend_to_parents,
         sent_only_to_parents=request.send_only_to_parents,
+        silent=request.silent,
     )
 
 
@@ -56,9 +53,7 @@ async def post_new_announcement(
     response_model=outgoing.AnnouncementsPreview,
 )
 async def preview_announcement(
-    request: incoming.Announcement,
-    session=Depends(get_session),
-    _=Depends(announcements_allowed),
+    request: incoming.Announcement, session=Depends(get_session)
 ):
     teachers, subclasses = await process_announcement(session, session, save=False)
     return outgoing.AnnouncementsPreview(
@@ -66,6 +61,7 @@ async def preview_announcement(
         subclasses=[outgoing.preview.Subclass.from_orm(s) for s in subclasses],
         sent_to_parents=request.resend_to_parents,
         sent_only_to_parents=request.send_only_to_parents,
+        silent=request.silent,
     )
 
 
@@ -73,11 +69,10 @@ async def preview_announcement(
     "/toall",
     tags=[ANNOUNCEMENTS, WEBSITE],
     response_model=List[int],
+    dependencies=[Depends(AllowLevels(Access.Admin))],
 )
 async def send_to_all(
-    request: incoming.SimpleAnnouncement,
-    session=Depends(get_session),
-    _=Depends(AllowLevels(Access.Admin)),
+    request: incoming.SimpleTelegraphAnnouncement, session=Depends(get_session)
 ):
     link = await publish_to_telegraph(request.title, request.text)
     accounts = session.query(database.Account).all()
@@ -93,7 +88,19 @@ async def send_to_all(
 
     telegram_ids = [acc.telegram_id for acc in accounts]
 
-    await send_to_transmitter(link, telegram_ids)
+    await send_to_transmitter(link, telegram_ids, silent=request.silent)
+    return telegram_ids
+
+
+@router.post("/text/toall", tags=[ANNOUNCEMENTS], response_model=List[int])
+async def send_text_to_all(
+    request: incoming.SimpleTextAnnouncement,
+    session=Depends(get_session),
+    _=Depends(AllowLevels(Access.Admin)),
+):
+    accounts = session.query(database.Account).all()
+    telegram_ids = [acc.telegram_id for acc in accounts]
+    await send_to_transmitter(request.text, telegram_ids, silent=request.silent)
     return telegram_ids
 
 
@@ -101,12 +108,9 @@ async def send_to_all(
     "/history",
     tags=[ANNOUNCEMENTS, WEBSITE],
     response_model=outgoing.HistoryAnnouncement,
+    dependencies=[Depends(AllowLevels(Access.Admin, Access.Telegram))],
 )
-async def get_history(
-    role_id: ID,
-    session=Depends(get_session),
-    _=Depends(AllowLevels(Access.Admin, Access.Telegram)),
-):
+async def get_history(role_id: ID, session=Depends(get_session)):
     role = db_validated.get_role_by_id(session, role_id)
     data = list(sorted(role.announcements, key=lambda x: -x.id))[:MAX_HISTORY_RESULTS]
     return outgoing.HistoryAnnouncement(

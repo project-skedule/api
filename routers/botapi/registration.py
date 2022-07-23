@@ -5,7 +5,6 @@ import valid_db_requests as db_validated
 from config import API_PREFIX, API_REGISTRATION_PREFIX
 from config import DEFAULT_LOGGER as logger
 from config import Access, get_session
-from extra import create_logger_dependency
 from extra.api_router import LoggingRouter
 from extra.service_auth import AllowLevels
 from extra.tags import ADMINISTRATION, PARENT, STUDENT, TEACHER
@@ -13,22 +12,18 @@ from fastapi import APIRouter, Depends
 from models import database
 from models.bot.telegram import incoming, outgoing
 
+allowed = AllowLevels(Access.Admin, Access.Telegram)
+
 router = APIRouter(
     prefix=API_PREFIX + API_REGISTRATION_PREFIX,
-    dependencies=[Depends(create_logger_dependency(logger))],
+    dependencies=[Depends(allowed)],
     route_class=LoggingRouter,
 )
 logger.info(f"Registation router created on {API_PREFIX+API_REGISTRATION_PREFIX}")
 
-registration_allowed = AllowLevels(Access.Admin, Access.Telegram)
-
 
 @router.post("/student", tags=[STUDENT], response_model=outgoing.Account)
-async def register_student(
-    request: incoming.Student,
-    session=Depends(get_session),
-    _=Depends(registration_allowed),
-):
+async def register_student(request: incoming.Student, session=Depends(get_session)):
     db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
     subclass = db_validated.get_subclass_by_id(session, request.subclass_id)
     school = db_validated.get_school_by_id(session, subclass.school_id)
@@ -60,11 +55,7 @@ async def register_student(
 
 
 @router.post("/teacher", tags=[TEACHER], response_model=outgoing.Account)
-async def register_teacher(
-    request: incoming.Teacher,
-    session=Depends(get_session),
-    _=Depends(registration_allowed),
-):
+async def register_teacher(request: incoming.Teacher, session=Depends(get_session)):
     db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
     teacher = db_validated.get_teacher_by_id(session, request.teacher_id)
 
@@ -94,9 +85,7 @@ async def register_teacher(
 
 @router.post("/administration", tags=[ADMINISTRATION], response_model=outgoing.Account)
 async def register_administration(
-    request: incoming.Administration,
-    session=Depends(get_session),
-    _=Depends(registration_allowed),
+    request: incoming.Administration, session=Depends(get_session)
 ):
     db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
     school = db_validated.get_school_by_id(session, request.school_id)
@@ -128,11 +117,7 @@ async def register_administration(
 
 
 @router.post("/parent", tags=[PARENT], response_model=outgoing.Account)
-async def register_parent(
-    request: incoming.Parent,
-    session=Depends(get_session),
-    _=Depends(registration_allowed),
-):
+async def register_parent(request: incoming.Parent, session=Depends(get_session)):
     db_validated.check_unique_account_by_telegram_id(session, request.telegram_id)
 
     account = database.Account(

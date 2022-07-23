@@ -17,5 +17,6 @@ class Teacher(BaseModel):
 class AnnouncementsPreview(BaseModel):
     teachers: List[Teacher]
     subclasses: List[Subclass]
-    sent_to_parents: bool
-    sent_only_to_parents: bool
+    sent_to_parents: bool = Field(False)
+    silent: bool = Field(False)
+    sent_only_to_parents: bool = Field(False)
